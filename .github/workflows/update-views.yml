@@ -1,0 +1,50 @@
+name: Update View Counter
+
+on:
+  # Run every 5 minutes
+  schedule:
+    - cron: '*/5 * * * *'
+  
+  # Manual trigger
+  workflow_dispatch:
+  
+  # OPTIONAL: Auto-trigger when pending-views.json updated
+  push:
+    branches:
+      - main
+    paths:
+      - 'pending-views.json'
+
+permissions:
+  contents: write
+
+jobs:
+  update-views:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Check and update views
+        run: node update-views.js
+      
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Check if there are changes
+          if git diff --quiet manga.json pending-views.json; then
+            echo "✅ No changes to commit"
+          else
+            git add manga.json pending-views.json
+            git commit -m "📊 Update view counter [skip ci]"
+            git push
+            echo "✅ Views committed!"
+          fi
