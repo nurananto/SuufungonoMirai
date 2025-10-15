@@ -1,0 +1,187 @@
+{
+  "manga": {
+    "title": "Suufungo no Mirai ga Wakaru You ni Natta kedo, Onnagokoro wa Wakaranai.",
+    "alternativeTitle": "数分後の未来が分かるようになったけど、女心は分からない。",
+    "cover": "https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/covers/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onna-b681b78e-75ce-4464-8089-50f37f00e0e9.jpg",
+    "description": "Arase Itou bisa melihat beberapa menit ke depan. Namun, masa depan yang ia lihat selalu berhubungan dengan masalah. Arase yang baik hati berusaha menghindari masa depan yang tidak menyenangkan ini, namun pada akhirnya masalah tersebut tetap membuatnya membantu berbagai gadis dengan masalah mereka. Tanpa ia sadari, para gadis mulai menyukainya. Arase tidak menyadari bahwa, diam-diam, para gadis bersaing untuk memperebutkannya.",
+    "author": "MTY",
+    "artist": "You2",
+    "genre": [
+      "Shounen",
+      "Drama",
+      "Harem",
+      "Comedy",
+      "Romance",
+      "Supernatural",
+      "School Life",
+      "Slice of Life"
+    ],
+    "status": "Ongoing",
+    "views": 0,
+    "links": {
+      "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
+      "raw": "https://comic-walker.com/detail/KC_005690_S"
+    },
+    "repoUrl": "https://raw.githubusercontent.com/nurananto/SuufungonoMirai/main/",
+    "imagePrefix": "Image",
+    "imageFormat": "jpg",
+    "lockedChapters": [
+      "13.1"
+    ]
+  },
+  "chapters": {
+    "4.1": {
+      "title": "Chapter 4.1",
+      "folder": "4.1",
+      "pages": 16,
+      "views": 1266,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "4.2": {
+      "title": "Chapter 4.2",
+      "folder": "4.2",
+      "pages": 14,
+      "views": 708,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "5.1": {
+      "title": "Chapter 5.1",
+      "folder": "5.1",
+      "pages": 15,
+      "views": 536,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "5.2": {
+      "title": "Chapter 5.2",
+      "folder": "5.2",
+      "pages": 15,
+      "views": 815,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "6.1": {
+      "title": "Chapter 6.1",
+      "folder": "6.1",
+      "pages": 14,
+      "views": 1451,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "6.2": {
+      "title": "Chapter 6.2",
+      "folder": "6.2",
+      "pages": 12,
+      "views": 1112,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "7.1": {
+      "title": "Chapter 7.1",
+      "folder": "7.1",
+      "pages": 15,
+      "views": 728,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "7.2": {
+      "title": "Chapter 7.2",
+      "folder": "7.2",
+      "pages": 15,
+      "views": 1273,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "8.1": {
+      "title": "Chapter 8.1",
+      "folder": "8.1",
+      "pages": 14,
+      "views": 688,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "8.2": {
+      "title": "Chapter 8.2",
+      "folder": "8.2",
+      "pages": 16,
+      "views": 1363,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "9.1": {
+      "title": "Chapter 9.1",
+      "folder": "9.1",
+      "pages": 15,
+      "views": 704,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "9.2": {
+      "title": "Chapter 9.2",
+      "folder": "9.2",
+      "pages": 15,
+      "views": 1136,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "10.1": {
+      "title": "Chapter 10.1",
+      "folder": "10.1",
+      "pages": 15,
+      "views": 1355,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "10.2": {
+      "title": "Chapter 10.2",
+      "folder": "10.2",
+      "pages": 15,
+      "views": 816,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "11.1": {
+      "title": "Chapter 11.1",
+      "folder": "11.1",
+      "pages": 18,
+      "views": 1216,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "11.2": {
+      "title": "Chapter 11.2",
+      "folder": "11.2",
+      "pages": 12,
+      "views": 1043,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "12.1": {
+      "title": "Chapter 12.1",
+      "folder": "12.1",
+      "pages": 15,
+      "views": 1405,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "12.2": {
+      "title": "Chapter 12.2",
+      "folder": "12.2",
+      "pages": 15,
+      "views": 957,
+      "uploadDate": "2025-10-15",
+      "locked": false
+    },
+    "13.1": {
+      "title": "Chapter 13.1",
+      "folder": "13.1",
+      "pages": 0,
+      "views": 0,
+      "uploadDate": null,
+      "locked": true
+    }
+  },
+  "lastUpdated": "2025-10-15T21:52:27.005Z"
+}
