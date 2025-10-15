@@ -1,0 +1,49 @@
+name: Generate manga.json
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'chapters/**'
+      - 'manga-config.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Generate manga.json
+        run: node generate-manga-json.js
+      
+      - name: Check if manga.json exists
+        run: |
+          if [ -f manga.json ]; then
+            echo "✅ manga.json created successfully"
+            cat manga.json
+          else
+            echo "❌ manga.json NOT created!"
+            exit 1
+          fi
+      
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add manga.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-generate manga.json [skip ci]"
+            git push
+          fi
