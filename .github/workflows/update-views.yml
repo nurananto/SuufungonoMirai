@@ -1,19 +1,12 @@
 name: Update View Counter
 
 on:
-  # Run every 5 minutes
+  # Run every 2 days (at 00:00 UTC)
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 0 */2 * *'
   
   # Manual trigger
   workflow_dispatch:
-  
-  # OPTIONAL: Auto-trigger when pending-views.json updated
-  push:
-    branches:
-      - main
-    paths:
-      - 'pending-views.json'
 
 permissions:
   contents: write
