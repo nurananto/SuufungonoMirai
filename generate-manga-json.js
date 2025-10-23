@@ -1,12 +1,14 @@
 /**
  * GENERATE MANGA.JSON (untuk GitHub Actions)
+ * UPDATED: Preserve views dari manga.json lama
  * 
  * Script ini akan:
  * 1. Baca manga-config.json
- * 2. Auto-detect semua folder chapter
- * 3. Hitung jumlah gambar per folder
- * 4. Check apakah chapter terkunci
- * 5. Generate manga.json lengkap
+ * 2. Baca manga.json lama (jika ada) untuk preserve views
+ * 3. Auto-detect semua folder chapter
+ * 4. Hitung jumlah gambar per folder
+ * 5. Check apakah chapter terkunci
+ * 6. Generate manga.json lengkap dengan views terakumulasi
  */
 
 const fs = require('fs');
@@ -24,6 +26,23 @@ function loadConfig() {
         console.error('❌ Error reading manga-config.json:', error.message);
         process.exit(1);
     }
+}
+
+// ============================================
+// LOAD OLD MANGA.JSON (NEW)
+// ============================================
+
+function loadOldMangaJSON() {
+    try {
+        if (fs.existsSync('manga.json')) {
+            const oldData = fs.readFileSync('manga.json', 'utf8');
+            console.log('📖 Found existing manga.json - reading old data...');
+            return JSON.parse(oldData);
+        }
+    } catch (error) {
+        console.warn('⚠️ Could not read old manga.json:', error.message);
+    }
+    return null;
 }
 
 // ============================================
@@ -72,7 +91,7 @@ function countImagesInFolder(folderName, imageFormat) {
         return imageFiles.length;
         
     } catch (error) {
-        console.error(`  ⚠️ Error reading folder ${folderName}:`, error.message);
+        console.error(`  ⚠️  Error reading folder ${folderName}:`, error.message);
         return 0;
     }
 }
@@ -94,10 +113,27 @@ function getUploadDate(folderName) {
 }
 
 // ============================================
-// GENERATE CHAPTERS DATA
+// GET VIEWS FROM OLD DATA (NEW)
 // ============================================
 
-function generateChaptersData(config) {
+function getOldChapterViews(chapterName, oldMangaData) {
+    if (!oldMangaData || !oldMangaData.chapters) {
+        return 0;
+    }
+    
+    const oldChapter = oldMangaData.chapters[chapterName];
+    if (oldChapter && oldChapter.views) {
+        return oldChapter.views;
+    }
+    
+    return 0;
+}
+
+// ============================================
+// GENERATE CHAPTERS DATA (UPDATED)
+// ============================================
+
+function generateChaptersData(config, oldMangaData) {
     const allFolders = getChapterFolders();
     const chapters = {};
     
@@ -112,7 +148,7 @@ function generateChaptersData(config) {
         return parseFloat(a) - parseFloat(b);
     });
     
-    console.log('\n🔍 Processing chapters...');
+    console.log('\n📖 Processing chapters...');
     
     sortedChapterNames.forEach(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
@@ -123,36 +159,53 @@ function generateChaptersData(config) {
         
         const pageCount = folderExists ? countImagesInFolder(chapterName, config.imageFormat) : 0;
         
+        // UPDATED: Get views dari data lama, atau 0 jika chapter baru
+        let views = 0;
+        if (actuallyLocked) {
+            // Chapter terkunci: ambil dari data lama (biar pending views terus terhitung)
+            views = getOldChapterViews(chapterName, oldMangaData);
+        } else if (folderExists) {
+            // Chapter unlocked dengan folder: ambil dari data lama
+            views = getOldChapterViews(chapterName, oldMangaData);
+        }
+        
         chapters[chapterName] = {
             title: `Chapter ${chapterName}`,
             folder: chapterName,
             pages: pageCount,
-            views: actuallyLocked ? 0 : Math.floor(Math.random() * 1000) + 500,
+            views: views,
             uploadDate: folderExists ? getUploadDate(chapterName) : null,
             locked: actuallyLocked
         };
         
         const status = actuallyLocked ? '🔒 LOCKED' : folderExists ? '✅ UNLOCKED' : '⚠️ NOT FOUND';
-        console.log(`  ${status} Chapter ${chapterName} - ${pageCount} pages`);
+        const viewsInfo = views > 0 ? ` (views: ${views})` : '';
+        console.log(`  ${status} Chapter ${chapterName} - ${pageCount} pages${viewsInfo}`);
     });
     
     return chapters;
 }
 
 // ============================================
-// GENERATE MANGA.JSON
+// GENERATE MANGA.JSON (UPDATED)
 // ============================================
 
-function generateMangaJSON() {
+function generateMangaJSON(oldMangaData) {
     const config = loadConfig();
     
     console.log('🚀 Starting manga.json generation...');
     console.log(`📚 Manga: ${config.title}\n`);
     
-    const chapters = generateChaptersData(config);
+    const chapters = generateChaptersData(config, oldMangaData);
     
     // Build repo URL
     const repoUrl = `https://raw.githubusercontent.com/${config.repoOwner}/${config.repoName}/main/`;
+    
+    // UPDATED: Preserve total views dari data lama
+    let totalViews = config.views || 0;
+    if (oldMangaData && oldMangaData.manga && oldMangaData.manga.views) {
+        totalViews = oldMangaData.manga.views;
+    }
     
     const mangaJSON = {
         manga: {
@@ -164,7 +217,7 @@ function generateMangaJSON() {
             artist: config.artist,
             genre: config.genre,
             status: config.status,
-            views: config.views,
+            views: totalViews,
             links: config.links,
             repoUrl: repoUrl,
             imagePrefix: config.imagePrefix,
@@ -184,19 +237,25 @@ function generateMangaJSON() {
 
 function saveMangaJSON() {
     try {
-        const data = generateMangaJSON();
+        // UPDATED: Load old data first
+        const oldMangaData = loadOldMangaJSON();
+        
+        const data = generateMangaJSON(oldMangaData);
         const jsonString = JSON.stringify(data, null, 2);
         
         fs.writeFileSync('manga.json', jsonString, 'utf8');
         
         console.log('\n✅ manga.json berhasil di-generate!');
-        console.log(`📊 Total chapters: ${Object.keys(data.chapters).length}`);
+        console.log(`📚 Total chapters: ${Object.keys(data.chapters).length}`);
         
         const lockedCount = Object.values(data.chapters).filter(ch => ch.locked).length;
         const unlockedCount = Object.values(data.chapters).filter(ch => !ch.locked).length;
+        const totalChapterViews = Object.values(data.chapters).reduce((sum, ch) => sum + (ch.views || 0), 0);
         
         console.log(`🔒 Locked chapters: ${lockedCount}`);
         console.log(`🔓 Unlocked chapters: ${unlockedCount}`);
+        console.log(`👁️  Total manga views: ${data.manga.views}`);
+        console.log(`👁️  Total chapter views: ${totalChapterViews}`);
         console.log(`📅 Last updated: ${data.lastUpdated}`);
         
     } catch (error) {
