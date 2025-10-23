@@ -1,11 +1,8 @@
 name: Update View Counter
 
 on:
-  # Run every 2 days (at 00:00 UTC)
   schedule:
     - cron: '0 0 */2 * *'
-  
-  # Manual trigger
   workflow_dispatch:
 
 permissions:
@@ -18,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -32,12 +31,27 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # Check if there are changes
+          # Pull latest changes first
+          git pull origin main --rebase || true
+          
           if git diff --quiet manga.json pending-views.json; then
             echo "✅ No changes to commit"
           else
             git add manga.json pending-views.json
             git commit -m "📊 Update view counter [skip ci]"
-            git push
+            
+            # Retry push if failed
+            max_retries=3
+            count=0
+            until git push origin main; do
+              count=$((count+1))
+              if [ $count -eq $max_retries ]; then
+                echo "❌ Failed to push after $max_retries attempts"
+                exit 1
+              fi
+              echo "⚠️  Push failed, retrying in 5 seconds... (attempt $count/$max_retries)"
+              sleep 5
+              git pull origin main --rebase
+            done
             echo "✅ Views committed!"
           fi
