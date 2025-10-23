@@ -1,22 +1,100 @@
 {
-  "chapters": {},
-  "lastUpdated": "2025-10-24T00:00:00.000Z"
+  "chapters": {
+    "4.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.633Z",
+      "lastUpdate": "2025-10-23T18:08:41.633Z"
+    },
+    "4.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "5.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "5.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "6.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "6.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "7.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "7.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "8.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "8.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "9.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "9.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "10.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "10.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "11.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "11.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.634Z",
+      "lastUpdate": "2025-10-23T18:08:41.634Z"
+    },
+    "12.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.635Z",
+      "lastUpdate": "2025-10-23T18:08:41.635Z"
+    },
+    "12.2": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.635Z",
+      "lastUpdate": "2025-10-23T18:08:41.635Z"
+    },
+    "13.1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:08:41.635Z",
+      "lastUpdate": "2025-10-23T18:08:41.635Z"
+    }
+  },
+  "lastUpdated": "2025-10-23T18:08:41.635Z"
 }
-```
-
-**Note:** Ganti timestamp dengan waktu sekarang atau biarkan saja (akan diupdate otomatis nanti).
-
----
-
-## ⚠️ **Error yang Akan Muncul Jika Tidak Ada**
-
-Jika pending files tidak dibuat, GitHub Actions akan error:
-```
-❌ Error updating views: Error: ENOENT: no such file or directory, 
-   open 'pending-views.json'
-```
-
-Atau:
-```
-❌ Error updating chapter views: Error: ENOENT: no such file or directory, 
-   open 'pending-chapter-views.json'
