@@ -1,0 +1,22 @@
+{
+  "chapters": {},
+  "lastUpdated": "2025-10-24T00:00:00.000Z"
+}
+```
+
+**Note:** Ganti timestamp dengan waktu sekarang atau biarkan saja (akan diupdate otomatis nanti).
+
+---
+
+## ⚠️ **Error yang Akan Muncul Jika Tidak Ada**
+
+Jika pending files tidak dibuat, GitHub Actions akan error:
+```
+❌ Error updating views: Error: ENOENT: no such file or directory, 
+   open 'pending-views.json'
+```
+
+Atau:
+```
+❌ Error updating chapter views: Error: ENOENT: no such file or directory, 
+   open 'pending-chapter-views.json'

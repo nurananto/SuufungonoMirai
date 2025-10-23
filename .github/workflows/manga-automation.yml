@@ -1,0 +1,151 @@
+name: Manga Automation
+
+on:
+  # Trigger 1: Detect new files atau perubahan
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.jpg'      # Detect gambar baru (JPG)
+      - '**/*.jpeg'     # Detect gambar baru (JPEG)
+      - '**/*.png'      # Detect gambar baru (PNG)
+      - '**/*.webp'     # Detect gambar baru (WEBP)
+      - 'manga-config.json'  # Config berubah
+  
+  # Trigger 2: Schedule SETIAP 1 HARI (jam 00:00 UTC)
+  schedule:
+    - cron: '0 0 * * *'  # Setiap hari jam 00:00 UTC (07:00 WIB)
+  
+  # Trigger 3: Manual trigger (untuk testing)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  manga-automation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      # Step 1: Generate manga.json (selalu jalan untuk update metadata)
+      - name: Generate manga.json
+        run: |
+          echo "📚 Generating manga.json..."
+          node manga-automation.js generate
+      
+      # Step 2: Sync chapters (pastikan semua chapter ter-track)
+      - name: Sync chapters
+        run: |
+          echo "🔄 Syncing chapters..."
+          node manga-automation.js sync
+      
+      # Step 3: Update manga views (cek threshold)
+      - name: Update manga views
+        run: |
+          echo "📊 Checking manga views..."
+          node manga-automation.js update-views
+      
+      # Step 4: Update chapter views (cek threshold)
+      - name: Update chapter views
+        run: |
+          echo "📖 Checking chapter views..."
+          node manga-automation.js update-chapters
+      
+      # Step 5: Commit and push all changes
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Pull latest changes
+          git pull origin main --rebase || true
+          
+          # Add all changed files
+          git add manga.json pending-views.json pending-chapter-views.json 2>/dev/null || true
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "✅ No changes to commit"
+          else
+            # Determine commit message based on what changed
+            CHANGED_FILES=$(git diff --staged --name-only)
+            
+            if echo "$CHANGED_FILES" | grep -q "manga.json"; then
+              if [ "${{ github.event_name }}" = "push" ]; then
+                COMMIT_MSG="📚 Auto-update manga data (new files detected) [skip ci]"
+              elif [ "${{ github.event_name }}" = "schedule" ]; then
+                COMMIT_MSG="📊 Daily update: views and metadata [skip ci]"
+              else
+                COMMIT_MSG="🔄 Manual update [skip ci]"
+              fi
+            else
+              COMMIT_MSG="📊 Update pending views [skip ci]"
+            fi
+            
+            git commit -m "$COMMIT_MSG"
+            
+            # Retry push if failed
+            max_retries=3
+            count=0
+            until git push origin main; do
+              count=$((count+1))
+              if [ $count -eq $max_retries ]; then
+                echo "❌ Failed to push after $max_retries attempts"
+                exit 1
+              fi
+              echo "⚠️  Push failed, retrying in 5 seconds... (attempt $count/$max_retries)"
+              sleep 5
+              git pull origin main --rebase
+            done
+            
+            echo "✅ Successfully pushed changes"
+            
+            # Show what was updated
+            echo ""
+            echo "📋 Updated files:"
+            echo "$CHANGED_FILES"
+          fi
+      
+      # Step 6: Summary
+      - name: Show Summary
+        if: always()
+        run: |
+          echo ""
+          echo "═══════════════════════════════════════"
+          echo "         AUTOMATION SUMMARY            "
+          echo "═══════════════════════════════════════"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Time: $(date)"
+          echo ""
+          
+          if [ -f manga.json ]; then
+            echo "📊 Manga Stats:"
+            node -e "
+              const data = require('./manga.json');
+              console.log('  Title: ' + data.manga.title);
+              console.log('  Total Views: ' + data.manga.views);
+              console.log('  Total Chapters: ' + Object.keys(data.chapters).length);
+              const locked = Object.values(data.chapters).filter(c => c.locked).length;
+              console.log('  Locked Chapters: ' + locked);
+            "
+          fi
+          
+          if [ -f pending-views.json ]; then
+            echo ""
+            echo "⏳ Pending Views:"
+            node -e "
+              const data = require('./pending-views.json');
+              console.log('  Pending: ' + data.pendingViews + ' (threshold: 20)');
+            "
+          fi
+          
+          echo "═══════════════════════════════════════"
