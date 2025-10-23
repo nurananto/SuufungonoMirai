@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -40,10 +42,28 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Pull latest changes first
+          git pull origin main --rebase || true
+          
           git add manga.json
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Auto-generate manga.json [skip ci]"
-            git push
+            
+            # Try to push, retry if failed
+            max_retries=3
+            count=0
+            until git push origin main; do
+              count=$((count+1))
+              if [ $count -eq $max_retries ]; then
+                echo "❌ Failed to push after $max_retries attempts"
+                exit 1
+              fi
+              echo "⚠️  Push failed, retrying in 5 seconds... (attempt $count/$max_retries)"
+              sleep 5
+              git pull origin main --rebase
+            done
+            echo "✅ Successfully pushed changes"
           fi
