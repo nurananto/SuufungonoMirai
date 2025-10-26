@@ -3,14 +3,16 @@
  * All-in-one script untuk automasi manga
  * 
  * Usage:
- * node manga-automation.js generate     → Generate manga.json
- * node manga-automation.js sync         → Sync chapters
- * node manga-automation.js update-views → Update manga views
- * node manga-automation.js update-chapters → Update chapter views
+ * node manga-automation.js generate                → Generate manga.json
+ * node manga-automation.js generate-chapters-json  → Generate chapters.json for website
+ * node manga-automation.js sync                    → Sync chapters
+ * node manga-automation.js update-views            → Update manga views
+ * node manga-automation.js update-chapters         → Update chapter views
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // ============================================
 // CONSTANTS
@@ -53,6 +55,55 @@ function saveJSON(filename, data) {
     } catch (error) {
         console.error(`❌ Error saving ${filename}:`, error.message);
         return false;
+    }
+}
+
+// ============================================
+// COMMAND: GENERATE CHAPTERS.JSON FOR WEBSITE
+// ============================================
+
+function commandGenerateChaptersJSON() {
+    console.log('📄 Generating chapters.json for website...\n');
+    
+    const mangaData = loadJSON('manga.json');
+    
+    if (!mangaData || !mangaData.chapters) {
+        console.error('❌ manga.json not found. Please run "generate" command first.');
+        process.exit(1);
+    }
+    
+    console.log(`📚 Processing ${Object.keys(mangaData.chapters).length} chapters...`);
+    
+    // Convert chapters object to array and sort by chapter number (descending)
+    const chaptersArray = Object.keys(mangaData.chapters)
+        .sort((a, b) => parseFloat(b) - parseFloat(a)) // Sort descending (newest first)
+        .map(chapterKey => {
+            const chapter = mangaData.chapters[chapterKey];
+            return {
+                title: chapter.title,
+                locked: chapter.locked || false
+            };
+        });
+    
+    const chaptersJSON = {
+        chapters: chaptersArray
+    };
+    
+    if (saveJSON('chapters.json', chaptersJSON)) {
+        console.log('\n✅ chapters.json generated successfully!');
+        console.log(`📊 Total chapters: ${chaptersArray.length}`);
+        
+        const lockedCount = chaptersArray.filter(ch => ch.locked).length;
+        console.log(`🔒 Locked chapters: ${lockedCount}`);
+        console.log(`🔓 Unlocked chapters: ${chaptersArray.length - lockedCount}`);
+        
+        console.log('\n📋 First 5 chapters (preview):');
+        chaptersArray.slice(0, 5).forEach((ch, idx) => {
+            const status = ch.locked ? '🔒' : '✅';
+            console.log(`  ${status} ${ch.title}`);
+        });
+    } else {
+        process.exit(1);
     }
 }
 
@@ -107,9 +158,29 @@ function getUploadDate(folderName) {
     const folderPath = path.join('.', folderName);
     
     try {
+        // Coba ambil tanggal dari Git commit pertama folder ini
+        const gitCommand = `git log --diff-filter=A --format=%aI -- "${folderName}" | tail -1`;
+        const result = execSync(gitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        
+        if (result) {
+            // Ambil tanggal dari ISO string
+            return result.split('T')[0];
+        }
+        
+        // Fallback 1: Coba ambil commit terakhir folder ini
+        const gitCommandLast = `git log -1 --format=%aI -- "${folderName}"`;
+        const resultLast = execSync(gitCommandLast, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        
+        if (resultLast) {
+            return resultLast.split('T')[0];
+        }
+        
+        // Fallback 2: Pakai file system modification time
         const stats = fs.statSync(folderPath);
         return stats.mtime.toISOString().split('T')[0];
     } catch (error) {
+        // Fallback 3: Pakai tanggal sekarang
+        console.log(`⚠️  Could not get upload date for ${folderName}, using current date`);
         return new Date().toISOString().split('T')[0];
     }
 }
@@ -162,12 +233,24 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
             }
         }
         
+        // Preserve uploadDate from old data, only get from Git if not exists
+        let uploadDate = null;
+        if (folderExists) {
+            // Cek apakah ada uploadDate lama
+            if (oldMangaData && oldMangaData.chapters && oldMangaData.chapters[chapterName] && oldMangaData.chapters[chapterName].uploadDate) {
+                uploadDate = oldMangaData.chapters[chapterName].uploadDate;
+            } else {
+                // Ambil dari Git (chapter baru)
+                uploadDate = getUploadDate(chapterName);
+            }
+        }
+        
         chapters[chapterName] = {
             title: `Chapter ${chapterName}`,
             folder: chapterName,
             pages: pageCount,
             views: views,
-            uploadDate: folderExists ? getUploadDate(chapterName) : null,
+            uploadDate: uploadDate,
             locked: actuallyLocked
         };
         
@@ -206,6 +289,57 @@ function commandGenerate() {
         totalViews = oldMangaData.manga.views;
     }
     
+    // ============================================
+    // DETECT CHAPTER CHANGES
+    // ============================================
+    let hasChapterChanges = false;
+    let lastChapterUpdate = null;
+    
+    if (isFirstTime) {
+        // First time = ada chapter baru
+        hasChapterChanges = true;
+        lastChapterUpdate = new Date().toISOString();
+        console.log('🆕 First-time setup - marking as chapter update');
+    } else {
+        // Compare old vs new chapters
+        const oldChapterKeys = oldMangaData.chapters ? Object.keys(oldMangaData.chapters) : [];
+        const newChapterKeys = Object.keys(chapters);
+        
+        // Check 1: Jumlah chapter berbeda?
+        if (oldChapterKeys.length !== newChapterKeys.length) {
+            hasChapterChanges = true;
+            console.log(`🆕 Chapter count changed: ${oldChapterKeys.length} → ${newChapterKeys.length}`);
+        }
+        
+        // Check 2: Ada chapter baru?
+        const newChapters = newChapterKeys.filter(key => !oldChapterKeys.includes(key));
+        if (newChapters.length > 0) {
+            hasChapterChanges = true;
+            console.log(`🆕 New chapters detected: ${newChapters.join(', ')}`);
+        }
+        
+        // Check 3: Ada chapter yang unlock (locked → unlocked)?
+        for (const key of newChapterKeys) {
+            const oldChapter = oldMangaData.chapters[key];
+            const newChapter = chapters[key];
+            
+            if (oldChapter && oldChapter.locked && !newChapter.locked) {
+                hasChapterChanges = true;
+                console.log(`🔓 Chapter unlocked: ${key}`);
+            }
+        }
+        
+        // Set lastChapterUpdate
+        if (hasChapterChanges) {
+            lastChapterUpdate = new Date().toISOString();
+            console.log('✅ Chapter changes detected - updating lastChapterUpdate');
+        } else {
+            // Preserve old lastChapterUpdate
+            lastChapterUpdate = oldMangaData.lastChapterUpdate || oldMangaData.lastUpdated || new Date().toISOString();
+            console.log('⏸️  No chapter changes - preserving lastChapterUpdate');
+        }
+    }
+    
     const mangaJSON = {
         manga: {
             title: config.title,
@@ -224,7 +358,8 @@ function commandGenerate() {
             lockedChapters: config.lockedChapters
         },
         chapters: chapters,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        lastChapterUpdate: lastChapterUpdate  // ← FIELD BARU!
     };
     
     if (saveJSON('manga.json', mangaJSON)) {
@@ -245,6 +380,11 @@ function commandGenerate() {
         console.log(`👁️  Total manga views: ${totalViews}`);
         console.log(`👁️  Total chapter views: ${totalChapterViews}`);
         console.log(`📅 Last updated: ${mangaJSON.lastUpdated}`);
+        console.log(`📅 Last chapter update: ${mangaJSON.lastChapterUpdate}`);
+        
+        if (hasChapterChanges) {
+            console.log('🆕 Chapter changes detected!');
+        }
     } else {
         process.exit(1);
     }
@@ -428,6 +568,9 @@ function main() {
         case 'generate':
             commandGenerate();
             break;
+        case 'generate-chapters-json':
+            commandGenerateChaptersJSON();
+            break;
         case 'sync':
             commandSync();
             break;
@@ -439,10 +582,11 @@ function main() {
             break;
         default:
             console.log('Usage:');
-            console.log('  node manga-automation.js generate         → Generate manga.json');
-            console.log('  node manga-automation.js sync             → Sync chapters');
-            console.log('  node manga-automation.js update-views     → Update manga views');
-            console.log('  node manga-automation.js update-chapters  → Update chapter views');
+            console.log('  node manga-automation.js generate                → Generate manga.json');
+            console.log('  node manga-automation.js generate-chapters-json  → Generate chapters.json for website');
+            console.log('  node manga-automation.js sync                    → Sync chapters');
+            console.log('  node manga-automation.js update-views            → Update manga views');
+            console.log('  node manga-automation.js update-chapters         → Update chapter views');
             process.exit(1);
     }
 }

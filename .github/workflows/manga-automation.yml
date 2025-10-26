@@ -48,6 +48,12 @@ jobs:
           echo "🔄 Syncing chapters..."
           node manga-automation.js sync
       
+      # Step 2.5: Generate chapters.json untuk website
+      - name: Generate chapters.json for website
+        run: |
+          echo "📄 Generating chapters.json for website..."
+          node manga-automation.js generate-chapters-json
+      
       # Step 3: Update manga views (cek threshold)
       - name: Update manga views
         run: |
@@ -70,7 +76,7 @@ jobs:
           git pull origin main --rebase || true
           
           # Add all changed files
-          git add manga.json pending-views.json pending-chapter-views.json 2>/dev/null || true
+          git add manga.json chapters.json pending-views.json pending-chapter-views.json 2>/dev/null || true
           
           # Check if there are changes to commit
           if git diff --staged --quiet; then
