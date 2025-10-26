@@ -1,0 +1,80 @@
+{
+  "chapters": [
+    {
+      "title": "Chapter 13.1",
+      "locked": true
+    },
+    {
+      "title": "Chapter 12.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 12.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 11.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 11.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 10.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 10.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 9.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 9.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 8.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 8.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 7.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 7.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 6.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 6.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 5.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 5.1",
+      "locked": false
+    },
+    {
+      "title": "Chapter 4.2",
+      "locked": false
+    },
+    {
+      "title": "Chapter 4.1",
+      "locked": false
+    }
+  ]
+}
