@@ -32,157 +32,193 @@
   "chapters": {
     "4.1": {
       "title": "Chapter 4.1",
+      "chapter": 4.1,
       "folder": "4.1",
-      "pages": 16,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 16,
+      "pages": 16,
+      "locked": false,
+      "views": 0
     },
     "4.2": {
       "title": "Chapter 4.2",
+      "chapter": 4.2,
       "folder": "4.2",
-      "pages": 14,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 14,
+      "pages": 14,
+      "locked": false,
+      "views": 0
     },
     "5.1": {
       "title": "Chapter 5.1",
+      "chapter": 5.1,
       "folder": "5.1",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "5.2": {
       "title": "Chapter 5.2",
+      "chapter": 5.2,
       "folder": "5.2",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "6.1": {
       "title": "Chapter 6.1",
+      "chapter": 6.1,
       "folder": "6.1",
-      "pages": 14,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 14,
+      "pages": 14,
+      "locked": false,
+      "views": 0
     },
     "6.2": {
       "title": "Chapter 6.2",
+      "chapter": 6.2,
       "folder": "6.2",
-      "pages": 12,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 12,
+      "pages": 12,
+      "locked": false,
+      "views": 0
     },
     "7.1": {
       "title": "Chapter 7.1",
+      "chapter": 7.1,
       "folder": "7.1",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "7.2": {
       "title": "Chapter 7.2",
+      "chapter": 7.2,
       "folder": "7.2",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "8.1": {
       "title": "Chapter 8.1",
+      "chapter": 8.1,
       "folder": "8.1",
-      "pages": 14,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 14,
+      "pages": 14,
+      "locked": false,
+      "views": 0
     },
     "8.2": {
       "title": "Chapter 8.2",
+      "chapter": 8.2,
       "folder": "8.2",
-      "pages": 16,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 16,
+      "pages": 16,
+      "locked": false,
+      "views": 0
     },
     "9.1": {
       "title": "Chapter 9.1",
+      "chapter": 9.1,
       "folder": "9.1",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "9.2": {
       "title": "Chapter 9.2",
+      "chapter": 9.2,
       "folder": "9.2",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "10.1": {
       "title": "Chapter 10.1",
+      "chapter": 10.1,
       "folder": "10.1",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "10.2": {
       "title": "Chapter 10.2",
+      "chapter": 10.2,
       "folder": "10.2",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "11.1": {
       "title": "Chapter 11.1",
+      "chapter": 11.1,
       "folder": "11.1",
-      "pages": 18,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 18,
+      "pages": 18,
+      "locked": false,
+      "views": 0
     },
     "11.2": {
       "title": "Chapter 11.2",
+      "chapter": 11.2,
       "folder": "11.2",
-      "pages": 12,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 12,
+      "pages": 12,
+      "locked": false,
+      "views": 0
     },
     "12.1": {
       "title": "Chapter 12.1",
+      "chapter": 12.1,
       "folder": "12.1",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "12.2": {
       "title": "Chapter 12.2",
+      "chapter": 12.2,
       "folder": "12.2",
-      "pages": 15,
-      "views": 0,
       "uploadDate": "2025-10-26",
-      "locked": false
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 0
     },
     "13.1": {
       "title": "Chapter 13.1",
       "folder": "13.1",
       "pages": 0,
       "views": 0,
-      "uploadDate": null,
+      "uploadDate": "2025-10-26",
       "locked": true
     }
   },
-  "lastUpdated": "2025-10-27T01:57:35.035Z",
-  "lastChapterUpdate": "2025-10-26T01:53:24.633Z"
+  "lastChapterUpdate": "2025-10-26",
+  "lastUpdated": "2025-10-28T01:47:06.239898Z"
 }
