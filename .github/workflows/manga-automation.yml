@@ -9,6 +9,7 @@ on:
       - '**/*.jpeg'
       - '**/*.png'
       - '**/*.webp'
+      - 'manga-config.json'
   
   schedule:
     - cron: '0 0 * * *'
@@ -27,318 +28,38 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.x'
+          node-version: '18'
       
-      - name: Update manga.json and chapters.json (preserve metadata)
-        run: |
-          python3 << 'PYTHON_SCRIPT'
-          import os
-          import json
-          import subprocess
-          import re
-          from datetime import datetime
-
-          print("🚀 Starting manga automation (preserving metadata)...")
-          print("")
-
-          def get_git_commit_date(folder_path):
-              """Get FIRST Git commit date when folder was created"""
-              try:
-                  # Get first commit (oldest) for this folder
-                  result = subprocess.run(
-                      ['git', 'log', '--reverse', '--format=%aI', '--', folder_path],
-                      capture_output=True,
-                      text=True,
-                      check=True
-                  )
-                  commits = result.stdout.strip().split('\n')
-                  first_commit = commits[0] if commits and commits[0] else None
-                  
-                  if first_commit:
-                      return first_commit
-                  else:
-                      # Fallback: use current time
-                      return datetime.utcnow().isoformat() + 'Z'
-                      
-              except Exception as e:
-                  return datetime.utcnow().isoformat() + 'Z'
-
-          def is_chapter_folder(folder_name):
-              """Check if folder is a chapter"""
-              pattern = r'^\d+(\.\d+)?$'
-              return re.match(pattern, folder_name) is not None
-
-          def parse_chapter_number(folder_name):
-              """Parse chapter number"""
-              try:
-                  return float(folder_name)
-              except:
-                  return 0.0
-
-          # ============================================
-          # STEP 1: Load existing manga.json (PRESERVE ALL METADATA!)
-          # ============================================
-          existing_manga_data = {}
-          if os.path.exists('manga.json'):
-              try:
-                  with open('manga.json', 'r', encoding='utf-8') as f:
-                      existing_manga_data = json.load(f)
-                  print("✅ Loaded existing manga.json (will preserve ALL metadata)")
-              except:
-                  print("⚠️  Could not load existing manga.json")
-          
-          # ============================================
-          # STEP 2: Scan chapters from disk
-          # ============================================
-          print("")
-          print("📂 Scanning for chapters on disk...")
-          chapters_dict = {}
-          chapter_list = []
-          scanned_keys = set()
-          
-          for item in os.listdir('.'):
-              if os.path.isdir(item) and is_chapter_folder(item):
-                  chapter_num = parse_chapter_number(item)
-                  
-                  image_files = [f for f in os.listdir(item) 
-                                if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))]
-                  
-                  # Title
-                  if chapter_num.is_integer():
-                      title = f"Chapter {int(chapter_num)}"
-                      chapter_key = str(int(chapter_num))
-                  else:
-                      title = f"Chapter {chapter_num}"
-                      chapter_key = str(chapter_num)
-                  
-                  scanned_keys.add(chapter_key)
-                  
-                  # Check if chapter already exists in old data
-                  old_chapter = existing_manga_data.get('chapters', {}).get(chapter_key, {})
-                  
-                  # IMPORTANT: For NEW chapters only, get Git date
-                  # For EXISTING chapters, preserve old date
-                  if old_chapter:
-                      # Chapter exists → PRESERVE old date
-                      upload_date = old_chapter.get('uploadDate', get_git_commit_date(item))
-                      is_new = False
-                  else:
-                      # NEW chapter → Get accurate Git date
-                      upload_date = get_git_commit_date(item)
-                      is_new = True
-                  
-                  chapter_data = {
-                      "title": old_chapter.get('title', title),  # Preserve custom title if exists
-                      "chapter": chapter_num,
-                      "folder": item,  # IMPORTANT: Add folder field!
-                      "uploadDate": upload_date,
-                      "totalPages": len(image_files),
-                      "pages": len(image_files),  # Alias for compatibility
-                      "locked": old_chapter.get('locked', False),  # Preserve locked status!
-                      "views": old_chapter.get('views', 0)  # Preserve views!
-                  }
-                  
-                  chapters_dict[chapter_key] = chapter_data
-                  chapter_list.append(chapter_data)
-                  
-                  status = "🆕 NEW" if is_new else "✅"
-                  print(f"  {status} {item}: {title} ({len(image_files)} pages, views: {chapter_data['views']}, date: {upload_date[:10]})")
-          
-          print("")
-          print(f"✅ Found {len(chapter_list)} chapters on disk")
-          
-          # ============================================
-          # STEP 3: Preserve locked chapters from old manga.json
-          # ============================================
-          print("")
-          print("🔒 Checking for locked chapters to preserve...")
-          locked_count = 0
-          
-          old_chapters = existing_manga_data.get('chapters', {})
-          for chapter_key, old_chapter in old_chapters.items():
-              # If chapter is locked AND not scanned from disk, preserve it
-              if old_chapter.get('locked', False) and chapter_key not in scanned_keys:
-                  chapters_dict[chapter_key] = dict(old_chapter)  # Preserve ALL fields
-                  chapter_list.append(dict(old_chapter))
-                  locked_count += 1
-                  print(f"  🔒 Preserved locked chapter: {old_chapter.get('title', chapter_key)} (not on disk)")
-          
-          if locked_count > 0:
-              print(f"✅ Preserved {locked_count} locked chapters")
-          else:
-              print("ℹ️  No locked chapters to preserve")
-          
-          print("")
-          print(f"✅ Total chapters: {len(chapter_list)} ({len(scanned_keys)} on disk + {locked_count} locked)")
-          
-          # ============================================
-          # STEP 3.5: Update null uploadDate for locked chapters
-          # ============================================
-          # Find the latest uploadDate from chapters on disk
-          latest_date = None
-          for ch in chapter_list:
-              ch_date = ch.get('uploadDate')
-              if ch_date and ch_date != 'null':
-                  if latest_date is None or ch_date > latest_date:
-                      latest_date = ch_date
-          
-          print(f"🔍 Debug: Latest date found: {latest_date}")
-          
-          # Update locked chapters with null uploadDate to use latest date
-          if latest_date:
-              print("")
-              print("📅 Updating locked chapters with null uploadDate...")
-              updated_count = 0
-              for chapter_key, chapter_data in chapters_dict.items():
-                  current_date = chapter_data.get('uploadDate')
-                  is_locked = chapter_data.get('locked', False)
-                  print(f"  🔍 Debug: {chapter_key} - locked={is_locked}, uploadDate={current_date}, type={type(current_date)}")
-                  if is_locked and current_date is None:
-                      chapter_data['uploadDate'] = latest_date
-                      updated_count += 1
-                      print(f"  ✅ {chapter_data['title']}: uploadDate updated to {latest_date}")
-              
-              # Also update in chapter_list
-              for chapter_data in chapter_list:
-                  if chapter_data.get('locked', False) and chapter_data.get('uploadDate') is None:
-                      chapter_data['uploadDate'] = latest_date
-              
-              print(f"✅ Updated {updated_count} locked chapters")
-          else:
-              print("⚠️  No valid date found to update locked chapters")
-          
-          # ============================================
-          # STEP 4: Sort chapters by UPLOAD DATE (DESC) for chapters.json
-          # ============================================
-          # Sort by uploadDate (DESC), then by chapter number (ASC)
-          # When dates are the same, chapters appear in correct numeric order
-          def sort_key(chapter):
-              upload_date = chapter.get('uploadDate')
-              # Convert None to empty string for sorting
-              if upload_date is None:
-                  upload_date = ''
-              chapter_num = chapter.get('chapter', 0)
-              # For DESC date but ASC chapter: negate date comparison
-              # Since we can't negate strings, we'll do two-pass sort
-              return (upload_date, chapter_num)
-          
-          # Sort by chapter number first (ASC)
-          chapter_list.sort(key=lambda x: x.get('chapter', 0))
-          # Then stable sort by date (DESC) - this preserves chapter order for same dates
-          chapter_list.sort(key=lambda x: x.get('uploadDate') or '', reverse=True)
-          
-          # Get last chapter update
-          last_chapter_update = None
-          if chapter_list:
-              last_chapter_update = chapter_list[0].get('uploadDate')
-              if last_chapter_update:
-                  print(f"📅 Last chapter update: {last_chapter_update}")
-          
-          # ============================================
-          # STEP 5: Build manga.json (PRESERVE ALL METADATA!)
-          # ============================================
-          
-          # Get existing manga metadata
-          existing_manga_info = existing_manga_data.get('manga', {})
-          
-          # START with ALL existing fields (COMPLETE preservation!)
-          manga_info = dict(existing_manga_info)  # Copy ALL existing fields
-          
-          # Only update/add these minimal required fields if they don't exist
-          if 'title' not in manga_info:
-              manga_info['title'] = os.path.basename(os.getcwd())
-          if 'cover' not in manga_info:
-              manga_info['cover'] = 'cover.jpg'
-          if 'views' not in manga_info:
-              manga_info['views'] = 0
-          
-          # Build final manga.json with NUMERIC SORTED keys
-          sorted_chapter_keys = sorted(chapters_dict.keys(), key=lambda k: parse_chapter_number(k))
-          sorted_chapters_dict = {k: chapters_dict[k] for k in sorted_chapter_keys}
-          
-          manga_data = {
-              "manga": manga_info,
-              "chapters": sorted_chapters_dict,
-              "lastChapterUpdate": last_chapter_update,
-              "lastUpdated": datetime.utcnow().isoformat() + 'Z'
-          }
-          
-          # ============================================
-          # STEP 6: Build chapters.json (for website - sorted by upload date DESC)
-          # ============================================
-          chapters_data = {
-              "chapters": chapter_list  # Already sorted by uploadDate DESC
-          }
-          
-          # ============================================
-          # STEP 7: Write files
-          # ============================================
-          print("")
-          print("💾 Writing files...")
-          
-          with open('manga.json', 'w', encoding='utf-8') as f:
-              json.dump(manga_data, f, indent=2, ensure_ascii=False)
-          print("  ✅ manga.json updated (ALL metadata preserved!)")
-          
-          with open('chapters.json', 'w', encoding='utf-8') as f:
-              json.dump(chapters_data, f, indent=2, ensure_ascii=False)
-          print("  ✅ chapters.json updated (sorted by upload date)")
-          
-          print("")
-          print("=" * 60)
-          print("📊 SUMMARY")
-          print("=" * 60)
-          print(f"Manga: {manga_info.get('title', 'N/A')}")
-          print(f"Total Chapters: {len(chapter_list)}")
-          print(f"  - On disk: {len(scanned_keys)}")
-          print(f"  - Locked (preserved): {locked_count}")
-          if chapter_list:
-              first_date = chapter_list[0].get('uploadDate', 'N/A')
-              last_date = chapter_list[-1].get('uploadDate', 'N/A')
-              print(f"Latest: {chapter_list[0]['title']} (uploaded: {first_date if first_date else 'N/A'})")
-              print(f"Oldest: {chapter_list[-1]['title']} (uploaded: {last_date if last_date else 'N/A'})")
-          print(f"Last Update: {last_chapter_update if last_chapter_update else 'N/A'}")
-          
-          # Show preserved metadata
-          preserved_fields = []
-          if 'alternativeTitle' in manga_info:
-              preserved_fields.append('alternativeTitle')
-          if 'description' in manga_info:
-              preserved_fields.append('description')
-          if 'author' in manga_info:
-              preserved_fields.append('author')
-          if 'genre' in manga_info:
-              preserved_fields.append('genre')
-          if 'links' in manga_info:
-              preserved_fields.append('links')
-          
-          if preserved_fields:
-              print(f"Metadata: ✅ Preserved ({', '.join(preserved_fields)})")
-          else:
-              print(f"Metadata: ⚠️  New manga (no existing metadata)")
-          
-          print("=" * 60)
-          
-          PYTHON_SCRIPT
+      - name: 📚 Generate manga.json
+        run: node manga-automation.js generate
       
-      - name: Commit and push changes
+      - name: 🔄 Sync chapters
+        run: node manga-automation.js sync
+      
+      - name: 📊 Update manga views
+        run: node manga-automation.js update-views
+      
+      - name: 📖 Update chapter views
+        run: node manga-automation.js update-chapters
+      
+      - name: 💾 Commit and push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
           git pull origin main --rebase || true
-          git add manga.json chapters.json 2>/dev/null || true
+          git add manga.json pending-views.json pending-chapter-views.json 2>/dev/null || true
           
           if git diff --staged --quiet; then
             echo "✅ No changes to commit"
           else
             if [ "${{ github.event_name }}" = "push" ]; then
-              COMMIT_MSG="📚 Auto-update chapters (metadata preserved) [skip ci]"
+              COMMIT_MSG="📚 Auto-update manga data [skip ci]"
             elif [ "${{ github.event_name }}" = "schedule" ]; then
-              COMMIT_MSG="📊 Daily refresh (metadata preserved) [skip ci]"
+              COMMIT_MSG="📊 Daily refresh [skip ci]"
             else
               COMMIT_MSG="🔄 Manual update [skip ci]"
             fi
@@ -361,7 +82,7 @@ jobs:
             echo "✅ Successfully pushed changes"
           fi
       
-      - name: Show Summary
+      - name: 📊 Show Summary
         if: always()
         run: |
           echo ""
@@ -374,27 +95,20 @@ jobs:
           
           if [ -f manga.json ]; then
             echo "📊 Manga Stats:"
-            MANGA_TITLE=$(jq -r '.manga.title' manga.json)
-            TOTAL_CHAPTERS=$(jq '.chapters | length' manga.json)
-            LAST_UPDATE=$(jq -r '.lastChapterUpdate // "N/A"' manga.json)
-            HAS_DESCRIPTION=$(jq -r '.manga.description // "N/A"' manga.json)
-            HAS_AUTHOR=$(jq -r '.manga.author // "N/A"' manga.json)
+            MANGA_TITLE=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).manga.title")
+            TOTAL_CHAPTERS=$(node -p "Object.keys(JSON.parse(require('fs').readFileSync('manga.json')).chapters).length")
+            LAST_UPDATE=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).lastChapterUpdate || 'N/A'")
+            MANGA_VIEWS=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).manga.views || 0")
             
-            echo "  Title: $MANGA_TITLE"
-            echo "  Chapters: $TOTAL_CHAPTERS"
-            echo "  Last Update: $LAST_UPDATE"
-            
-            if [ "$HAS_DESCRIPTION" != "N/A" ]; then
-              echo "  ✅ Description: Preserved"
-            fi
-            
-            if [ "$HAS_AUTHOR" != "N/A" ]; then
-              echo "  ✅ Author: $HAS_AUTHOR"
-            fi
-            
-            echo ""
-            echo "📖 Latest Chapters (from chapters.json):"
-            jq -r '.chapters[:3] | .[] | "  - \(.title) (\(.uploadDate))"' chapters.json
+            echo "  📚 Title: $MANGA_TITLE"
+            echo "  📖 Chapters: $TOTAL_CHAPTERS"
+            echo "  📅 Last Update: $LAST_UPDATE"
+            echo "  👁️  Views: $MANGA_VIEWS"
+          fi
+          
+          if [ -f pending-views.json ]; then
+            PENDING_VIEWS=$(node -p "JSON.parse(require('fs').readFileSync('pending-views.json')).pendingViews || 0")
+            echo "  ⏳ Pending Views: $PENDING_VIEWS / 20"
           fi
           
           echo "╚═════════════════════════════════════════╝"
