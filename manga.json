@@ -212,13 +212,15 @@
     },
     "13.1": {
       "title": "Chapter 13.1",
+      "chapter": 13.1,
       "folder": "13.1",
-      "pages": 0,
-      "views": 0,
       "uploadDate": "2025-10-06",
-      "locked": true
+      "totalPages": 0,
+      "pages": 0,
+      "locked": true,
+      "views": 0
     }
   },
-  "lastChapterUpdate": "2025-10-06",
-  "lastUpdated": "2025-10-29T01:54:20.911234Z"
+  "lastUpdated": "2025-10-30T01:44:16.919Z",
+  "lastChapterUpdate": "2025-10-06"
 }
