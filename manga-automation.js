@@ -1,11 +1,10 @@
 /**
- * MANGA-AUTOMATION.JS
- * All-in-one script untuk automasi manga
- * COMPATIBLE WITH manga-automation.yml v3.0
+ * MANGA-AUTOMATION.JS - FIXED VERSION
+ * ✅ Fix: lastChapterUpdate uses LATEST unlocked chapter date (not stuck)
+ * ✅ Fix: All timestamps converted to WIB (GMT+7)
  * 
  * Usage:
  * node manga-automation.js generate                → Generate manga.json
- * node manga-automation.js generate-chapters-json  → Generate chapters.json for website
  * node manga-automation.js sync                    → Sync chapters
  * node manga-automation.js update-views            → Update manga views
  * node manga-automation.js update-chapters         → Update chapter views
@@ -21,6 +20,25 @@ const { execSync } = require('child_process');
 
 const VIEW_THRESHOLD = 20;
 const CHAPTER_VIEW_THRESHOLD = 10;
+
+// ============================================
+// WIB TIMEZONE HELPER (GMT+7)
+// ============================================
+
+function getWIBTimestamp() {
+    const now = new Date();
+    // Convert to WIB (UTC+7)
+    const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    return wibTime.toISOString();
+}
+
+function convertToWIB(isoString) {
+    if (!isoString) return null;
+    const date = new Date(isoString);
+    // Convert to WIB (UTC+7)
+    const wibTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    return wibTime.toISOString();
+}
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -56,72 +74,6 @@ function saveJSON(filename, data) {
     } catch (error) {
         console.error(`❌ Error saving ${filename}:`, error.message);
         return false;
-    }
-}
-
-// ============================================
-// COMMAND: GENERATE CHAPTERS.JSON FOR WEBSITE
-// ============================================
-
-function commandGenerateChaptersJSON() {
-    console.log('📄 Generating chapters.json for website...\n');
-    
-    const mangaData = loadJSON('manga.json');
-    
-    if (!mangaData || !mangaData.chapters) {
-        console.error('❌ manga.json not found. Please run "generate" command first.');
-        process.exit(1);
-    }
-    
-    console.log(`📚 Processing ${Object.keys(mangaData.chapters).length} chapters...`);
-    
-    // Convert chapters object to array
-    const chaptersArray = Object.keys(mangaData.chapters).map(chapterKey => {
-        const chapter = mangaData.chapters[chapterKey];
-        return {
-            title: chapter.title,
-            chapter: chapter.chapter || parseFloat(chapterKey),
-            uploadDate: chapter.uploadDate || null,
-            totalPages: chapter.totalPages || chapter.pages || 0,
-            pages: chapter.pages || chapter.totalPages || 0,
-            locked: chapter.locked || false,
-            views: chapter.views || 0,
-            folder: chapter.folder || chapterKey
-        };
-    });
-    
-    // IMPORTANT: Sort by uploadDate DESC, then by chapter ASC (for same dates)
-    // This matches the YML behavior using stable sort
-    chaptersArray.sort((a, b) => a.chapter - b.chapter); // First: chapter ASC
-    chaptersArray.sort((a, b) => {
-        // Second: uploadDate DESC (stable sort preserves chapter order for same dates)
-        const dateA = a.uploadDate || '';
-        const dateB = b.uploadDate || '';
-        if (dateB > dateA) return 1;
-        if (dateB < dateA) return -1;
-        return 0;
-    });
-    
-    const chaptersJSON = {
-        chapters: chaptersArray
-    };
-    
-    if (saveJSON('chapters.json', chaptersJSON)) {
-        console.log('\n✅ chapters.json generated successfully!');
-        console.log(`📊 Total chapters: ${chaptersArray.length}`);
-        
-        const lockedCount = chaptersArray.filter(ch => ch.locked).length;
-        console.log(`🔒 Locked chapters: ${lockedCount}`);
-        console.log(`🔓 Unlocked chapters: ${chaptersArray.length - lockedCount}`);
-        
-        console.log('\n📋 First 5 chapters (preview):');
-        chaptersArray.slice(0, 5).forEach((ch, idx) => {
-            const status = ch.locked ? '🔒' : '✅';
-            const date = ch.uploadDate ? ch.uploadDate.split('T')[0] : 'N/A';
-            console.log(`  ${status} ${ch.title} (${date})`);
-        });
-    } else {
-        process.exit(1);
     }
 }
 
@@ -172,26 +124,42 @@ function checkIfFolderExists(folderName) {
     return fs.existsSync(path.join('.', folderName));
 }
 
-function getUploadDate(folderName) {
+function getUploadDate(folderName, isLocked) {
     const folderPath = path.join('.', folderName);
     
     try {
-        // Get FIRST commit date (when folder was created) - matches YML behavior
-        const gitCommand = `git log --reverse --format=%aI -- "${folderName}" | head -1`;
-        const result = execSync(gitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        // ============================================
+        // FIX: Different logic for locked vs unlocked
+        // ============================================
         
-        if (result) {
-            // Return full ISO format to match YML
-            return result;
+        if (!isLocked) {
+            // UNLOCKED: Get date from FIRST IMAGE commit (when images were added)
+            const imageGitCommand = `git log --reverse --format=%aI -- "${folderName}/*.jpg" "${folderName}/*.jpeg" "${folderName}/*.png" "${folderName}/*.webp" 2>/dev/null | head -1`;
+            const imageResult = execSync(imageGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+            
+            if (imageResult) {
+                // Convert to WIB timezone
+                console.log(`  🖼️  Using first image commit date for ${folderName}`);
+                return convertToWIB(imageResult);
+            }
+        }
+        
+        // LOCKED or NO IMAGES: Get folder creation date
+        const folderGitCommand = `git log --reverse --format=%aI -- "${folderName}" | head -1`;
+        const folderResult = execSync(folderGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        
+        if (folderResult) {
+            // Convert to WIB timezone
+            return convertToWIB(folderResult);
         }
         
         // Fallback: Use file system modification time
         const stats = fs.statSync(folderPath);
-        return stats.mtime.toISOString();
+        return convertToWIB(stats.mtime.toISOString());
     } catch (error) {
-        // Fallback: Use current date
+        // Fallback: Use current date in WIB
         console.log(`⚠️  Could not get upload date for ${folderName}, using current date`);
-        return new Date().toISOString();
+        return getWIBTimestamp();
     }
 }
 
@@ -227,82 +195,69 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         console.log('🆕 First-time generation detected - setting all views to 0');
     }
     
-    // Find latest uploadDate from UNLOCKED chapters only
-    let latestUnlockedUploadDate = null;
+    // ============================================
+    // FIX: Collect ALL unlocked chapters with their dates
+    // ============================================
+    const unlockedChaptersWithDates = [];
     
     sortedChapterNames.forEach(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
         const isLocked = config.lockedChapters.includes(chapterName);
-        const actuallyLocked = isLocked && !folderExists;
-        const pageCount = folderExists ? countImagesInFolder(chapterName) : 0;
         
-        // Set views to 0 if first time, otherwise preserve from old data
-        let views = 0;
-        if (!isFirstTime) {
-            if (actuallyLocked) {
-                views = getOldChapterViews(chapterName, oldMangaData);
-            } else if (folderExists) {
-                views = getOldChapterViews(chapterName, oldMangaData);
-            }
-        }
+        const totalPages = folderExists ? countImagesInFolder(chapterName) : 0;
+        const uploadDate = folderExists ? getUploadDate(chapterName, isLocked) : getWIBTimestamp();
         
-        // Get uploadDate
-        let uploadDate = null;
-        const oldChapter = oldMangaData?.chapters?.[chapterName];
-        
-        if (folderExists) {
-            // For unlocked chapters: get from Git or preserve old
-            if (oldChapter && oldChapter.uploadDate) {
-                uploadDate = oldChapter.uploadDate;
-            } else {
-                uploadDate = getUploadDate(chapterName);
-            }
-            
-            // Track latest date from UNLOCKED chapters only
-            if (!actuallyLocked && uploadDate && (!latestUnlockedUploadDate || uploadDate > latestUnlockedUploadDate)) {
-                latestUnlockedUploadDate = uploadDate;
-            }
-        } else if (actuallyLocked) {
-            // For locked chapters: will be updated later
-            uploadDate = oldChapter?.uploadDate || null;
-        }
-        
-        const chapterNum = parseFloat(chapterName);
-        const title = chapterNum % 1 === 0 
-            ? `Chapter ${parseInt(chapterName)}` 
-            : `Chapter ${chapterName}`;
+        // Preserve views from old data
+        const views = isFirstTime ? 0 : getOldChapterViews(chapterName, oldMangaData);
         
         chapters[chapterName] = {
-            title: oldChapter?.title || title,
-            chapter: chapterNum,
+            title: `Chapter ${chapterName}`,
+            chapter: parseFloat(chapterName),
             folder: chapterName,
             uploadDate: uploadDate,
-            totalPages: pageCount,
-            pages: pageCount,
-            locked: actuallyLocked,
+            totalPages: totalPages,
+            pages: totalPages,
+            locked: isLocked,
             views: views
         };
+        
+        // ✅ COLLECT all unlocked chapters with dates
+        if (!isLocked && folderExists) {
+            unlockedChaptersWithDates.push({
+                chapterName: chapterName,
+                uploadDate: uploadDate
+            });
+        }
+        
+        const lockIcon = isLocked ? '🔒' : '✅';
+        const dateStr = uploadDate.split('T')[0];
+        console.log(`${lockIcon} ${chapterName} - ${totalPages} pages - ${dateStr} - ${views} views`);
     });
     
-    // Update ALL locked chapters to use latest UNLOCKED chapter date
-    if (latestUnlockedUploadDate) {
-        console.log(`\n📅 Latest unlocked chapter date: ${latestUnlockedUploadDate}`);
-        console.log('🔒 Updating all locked chapters to use this date:');
-        
-        Object.keys(chapters).forEach(chapterKey => {
-            const chapter = chapters[chapterKey];
-            if (chapter.locked) {
-                chapter.uploadDate = latestUnlockedUploadDate;
-                console.log(`  ✅ ${chapter.title}: uploadDate = ${latestUnlockedUploadDate}`);
-            }
+    // ============================================
+    // FIX: Find LATEST upload date from unlocked chapters
+    // ============================================
+    let lastChapterUpdate = null;
+    
+    if (unlockedChaptersWithDates.length > 0) {
+        // Sort by date DESC and get the LATEST one
+        unlockedChaptersWithDates.sort((a, b) => {
+            return new Date(b.uploadDate) - new Date(a.uploadDate);
         });
+        
+        lastChapterUpdate = unlockedChaptersWithDates[0].uploadDate.split('T')[0];
+        
+        console.log(`\n✅ Last chapter update: ${lastChapterUpdate} (from chapter ${unlockedChaptersWithDates[0].chapterName})`);
+    } else {
+        console.log('\n⚠️  No unlocked chapters found, using current date');
+        lastChapterUpdate = getWIBTimestamp().split('T')[0];
     }
     
-    return chapters;
+    return { chapters, lastChapterUpdate };
 }
 
 function commandGenerate() {
-    console.log('🚀 Generating manga.json...\n');
+    console.log('📚 Generating manga.json...\n');
     
     const config = loadConfig();
     const oldMangaData = loadJSON('manga.json');
@@ -310,69 +265,55 @@ function commandGenerate() {
     const isFirstTime = !oldMangaData || !oldMangaData.manga;
     
     if (isFirstTime) {
-        console.log('🆕 First-time setup detected!\n');
+        console.log('🆕 First-time generation - creating new manga.json');
     } else {
-        console.log('🔄 Updating existing manga.json...\n');
+        console.log('🔄 Updating existing manga.json');
     }
     
-    const chapters = generateChaptersData(config, oldMangaData, isFirstTime);
+    const { chapters, lastChapterUpdate } = generateChaptersData(config, oldMangaData, isFirstTime);
     
     let totalViews = 0;
-    if (isFirstTime) {
-        totalViews = 0;
-        console.log('\n🎉 First-time generation: Setting manga views to 0');
+    let hasChapterChanges = false;
+    
+    if (oldMangaData && oldMangaData.manga) {
+        totalViews = oldMangaData.manga.views || 0;
+        
+        const oldChapterCount = Object.keys(oldMangaData.chapters || {}).length;
+        const newChapterCount = Object.keys(chapters).length;
+        
+        hasChapterChanges = oldChapterCount !== newChapterCount;
     } else {
-        totalViews = oldMangaData?.manga?.views || 0;
-        console.log(`\n📊 Preserving manga views: ${totalViews}`);
+        totalViews = config.views || 0;
     }
     
-    // Get last chapter update date (latest uploadDate)
-    let lastChapterUpdate = null;
-    Object.values(chapters).forEach(chapter => {
-        if (chapter.uploadDate && (!lastChapterUpdate || chapter.uploadDate > lastChapterUpdate)) {
-            lastChapterUpdate = chapter.uploadDate;
-        }
-    });
-    
-    // Check for chapter changes
-    const hasChapterChanges = !oldMangaData || 
-        Object.keys(chapters).length !== Object.keys(oldMangaData.chapters || {}).length;
-    
-    // Preserve ALL manga metadata
-    const oldMangaInfo = oldMangaData?.manga || {};
-    const mangaInfo = {
-        ...oldMangaInfo,
-        title: oldMangaInfo.title || config.title,
-        alternativeTitle: oldMangaInfo.alternativeTitle || config.alternativeTitle,
-        cover: oldMangaInfo.cover || config.cover,
-        description: oldMangaInfo.description || config.description,
-        author: oldMangaInfo.author || config.author,
-        artist: oldMangaInfo.artist || config.artist,
-        genre: oldMangaInfo.genre || config.genre,
-        status: oldMangaInfo.status || config.status,
-        views: totalViews,
-        links: oldMangaInfo.links || config.links,
-        repoUrl: oldMangaInfo.repoUrl || config.repoUrl,
-        imagePrefix: oldMangaInfo.imagePrefix || config.imagePrefix,
-        imageFormat: oldMangaInfo.imageFormat || config.imageFormat,
-        lockedChapters: config.lockedChapters
-    };
+    const repoUrl = `https://raw.githubusercontent.com/${config.repoOwner}/${config.repoName}/main/`;
     
     const mangaJSON = {
-        manga: mangaInfo,
+        manga: {
+            title: config.title,
+            alternativeTitle: config.alternativeTitle,
+            cover: config.cover,
+            description: config.description,
+            author: config.author,
+            artist: config.artist,
+            genre: config.genre,
+            status: config.status,
+            views: totalViews,
+            links: config.links,
+            repoUrl: repoUrl,
+            imagePrefix: config.imagePrefix || 'Image',
+            imageFormat: config.imageFormat || 'jpg',
+            lockedChapters: config.lockedChapters || []
+        },
         chapters: chapters,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: getWIBTimestamp(),
         lastChapterUpdate: lastChapterUpdate
     };
     
     if (saveJSON('manga.json', mangaJSON)) {
         console.log('\n✅ manga.json generated successfully!');
-        
-        if (isFirstTime) {
-            console.log('🎉 FIRST-TIME SETUP COMPLETE');
-        }
-        
-        console.log(`📚 Total chapters: ${Object.keys(chapters).length}`);
+        console.log(`📊 Stats:`);
+        console.log(`   Total chapters: ${Object.keys(chapters).length}`);
         
         const lockedCount = Object.values(chapters).filter(ch => ch.locked).length;
         const unlockedCount = Object.values(chapters).filter(ch => !ch.locked).length;
@@ -411,7 +352,7 @@ function commandSync() {
     
     let pendingData = {
         chapters: {},
-        lastUpdated: new Date().toISOString()
+        lastUpdated: getWIBTimestamp()
     };
     
     const existingPending = loadJSON('pending-chapter-views.json');
@@ -431,8 +372,8 @@ function commandSync() {
         if (!pendingData.chapters[chapterKey]) {
             pendingData.chapters[chapterKey] = {
                 pendingViews: 0,
-                lastIncrement: new Date().toISOString(),
-                lastUpdate: new Date().toISOString()
+                lastIncrement: getWIBTimestamp(),
+                lastUpdate: getWIBTimestamp()
             };
             console.log(`  ✔ Added new chapter: ${chapterKey}`);
             addedCount++;
@@ -441,7 +382,7 @@ function commandSync() {
         }
     });
     
-    pendingData.lastUpdated = new Date().toISOString();
+    pendingData.lastUpdated = getWIBTimestamp();
     
     if (saveJSON('pending-chapter-views.json', pendingData)) {
         console.log(`\n✅ Sync completed!`);
@@ -483,7 +424,7 @@ function commandUpdateViews() {
     
     if (saveJSON('manga.json', manga)) {
         pendingData.pendingViews = 0;
-        pendingData.lastUpdate = new Date().toISOString();
+        pendingData.lastUpdate = getWIBTimestamp();
         
         if (saveJSON('pending-views.json', pendingData)) {
             console.log(`✅ Views updated! Total: ${manga.manga.views}`);
@@ -538,7 +479,7 @@ function commandUpdateChapterViews() {
             chapter.views = (chapter.views || 0) + pendingViews;
             
             pendingChapterData.pendingViews = 0;
-            pendingChapterData.lastUpdate = new Date().toISOString();
+            pendingChapterData.lastUpdate = getWIBTimestamp();
             
             console.log(`   Total views: ${chapter.views}`);
             
@@ -551,7 +492,7 @@ function commandUpdateChapterViews() {
     });
     
     if (hasChanges) {
-        manga.lastUpdated = new Date().toISOString();
+        manga.lastUpdated = getWIBTimestamp();
         
         if (saveJSON('manga.json', manga) && saveJSON('pending-chapter-views.json', pendingData)) {
             console.log(`\n✅ Updated ${updatedChapters} chapter(s)!`);
@@ -575,16 +516,14 @@ function main() {
     const command = process.argv[2];
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('     MANGA AUTOMATION SCRIPT v3.1     ');
-    console.log('   Locked Chapters Follow Latest Date   ');
+    console.log('║   MANGA AUTOMATION SCRIPT v4.0 WIB  ║');
+    console.log('║  ✅ WIB Timezone (GMT+7)             ║');
+    console.log('║  ✅ Fixed lastChapterUpdate          ║');
     console.log('╚═══════════════════════════════════════╝\n');
     
     switch (command) {
         case 'generate':
             commandGenerate();
-            break;
-        case 'generate-chapters-json':
-            commandGenerateChaptersJSON();
             break;
         case 'sync':
             commandSync();
@@ -597,11 +536,10 @@ function main() {
             break;
         default:
             console.log('Usage:');
-            console.log('  node manga-automation.js generate                → Generate manga.json');
-            console.log('  node manga-automation.js generate-chapters-json  → Generate chapters.json for website');
-            console.log('  node manga-automation.js sync                    → Sync chapters');
-            console.log('  node manga-automation.js update-views            → Update manga views');
-            console.log('  node manga-automation.js update-chapters         → Update chapter views');
+            console.log('  node manga-automation.js generate         → Generate manga.json');
+            console.log('  node manga-automation.js sync             → Sync chapters');
+            console.log('  node manga-automation.js update-views     → Update manga views');
+            console.log('  node manga-automation.js update-chapters  → Update chapter views');
             process.exit(1);
     }
 }
