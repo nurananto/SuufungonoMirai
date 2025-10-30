@@ -1,316 +1,433 @@
-# 📦 FILE PACKAGE - OPTIMASI REPO CHAPTER
+# 📚 Manga Repository Documentation
 
-## 📋 Daftar File
+Documentation for individual manga repository structure and automation.
 
-### 🎯 File Utama (Wajib)
-1. **manga-automation-daily.yml** (5.3 KB)
-   - Workflow GitHub Actions
-   - Update otomatis setiap hari
-   - Auto-detect file baru
-   - **Rename jadi `manga-automation.yml` saat upload**
-
-2. **manga-automation.js** (15 KB)
-   - Script all-in-one
-   - 4 command dalam 1 file:
-     - `generate` → Generate manga.json
-     - `sync` → Sync chapters
-     - `update-views` → Update manga views
-     - `update-chapters` → Update chapter views
-   - Auto-detect first-time (set views = 0)
-
-### 🔧 File Optional
-3. **reset-views.js** (3.9 KB)
-   - Script untuk reset semua views ke 0
-   - Untuk mulai dari awal
-   - Butuh konfirmasi "RESET"
-
-### 📚 File Dokumentasi
-4. **QUICK-START.md** (6.2 KB)
-   - Panduan cepat setup manga baru
-   - Step-by-step 5 menit
-   - FAQ lengkap
-
-5. **DAILY-UPDATE-GUIDE.md** (8.0 KB)
-   - Penjelasan detail fitur daily update
-   - Cara kerja first-time setup
-   - Cara reset views manual
-   - Monitoring dan troubleshooting
-
-6. **MIGRATION-GUIDE.md** (5.8 KB)
-   - Migrasi dari sistem lama
-   - Perbandingan file struktur
-   - 2 opsi optimasi
-
-### 🗂️ File Alternatif (Tidak Digunakan)
-7. **manga-automation.yml** (6.9 KB)
-   - Versi multi-job workflow
-   - Masih pakai 4 file JS terpisah
-   - Untuk yang prefer file kecil-kecil
-
-8. **manga-automation-simplified.yml** (3.2 KB)
-   - Versi simplified workflow
-   - Pakai manga-automation.js
-   - Update setiap 2 hari (bukan daily)
+**Example Repository:** `YarikondaRenaiGame`
 
 ---
 
-## 🎯 Yang Perlu Di-Download
-
-### Untuk Manga Baru:
-```
-✅ manga-automation-daily.yml     → Rename jadi manga-automation.yml
-✅ manga-automation.js             → Script utama
-✅ reset-views.js                  → Optional (untuk reset manual)
-✅ QUICK-START.md                  → Baca panduan ini
-```
-
-### Untuk Migrasi dari Sistem Lama:
-```
-✅ MIGRATION-GUIDE.md              → Baca dulu!
-✅ manga-automation-daily.yml      → Workflow baru
-✅ manga-automation.js             → Script baru
-```
-
----
-
-## 📊 Perbandingan File
-
-### Sebelum Optimasi (12 files):
-```
-.github/workflows/
-├── generate-manga-json.yml
-├── sync-chapters.yml
-├── update-views.yml
-└── update-chapter-views.yml
-
-generate-manga-json.js
-sync-pending-chapters.js
-update-views.js
-update-chapter-views.js
-+ 4 config/data files
-```
-
-### Setelah Optimasi (6 files):
-```
-.github/workflows/
-└── manga-automation.yml
-
-manga-automation.js
-reset-views.js (optional)
-+ 4 config/data files
-```
-
-**Berkurang 50%!** 🎉
-
----
-
-## 🚀 Fitur Baru
-
-### ✅ Daily Auto-Update
-- Schedule: Setiap 1 hari (bukan 2 hari)
-- Waktu: 00:00 UTC / 07:00 WIB
-- Otomatis cek dan update views
-
-### ✅ Auto-Detect File Baru
-- Upload gambar baru → Workflow jalan otomatis
-- Format support: jpg, jpeg, png, webp
-- Edit manga-config.json → Auto-update
-
-### ✅ First-Time Setup (Views = 0)
-- Deteksi otomatis manga baru
-- Set semua views ke 0
-- Tidak perlu setting manual
-
-### ✅ Reset Views Manual
-- Script khusus untuk reset
-- Konfirmasi "RESET" untuk keamanan
-- Bersihkan semua data views
-
----
-
-## 📁 Struktur Repo Final
+## 📂 Repository Structure
 
 ```
-repo-chapter/
+YarikondaRenaiGame/
+├── manga.json                      # ⚙️ Auto-generated manga data
+├── manga-config.json               # 📝 Manual configuration
+├── pending-views.json              # 📊 Pending page views counter
+├── pending-chapter-views.json      # 📖 Pending chapter views counter
+│
+├── manga-automation.js             # 🤖 Automation script
 ├── .github/
 │   └── workflows/
-│       └── manga-automation.yml         ← Workflow
+│       └── manga-automation.yml    # 🔄 GitHub Actions workflow
 │
-├── 1/                                   ← Chapter folders
-│   ├── Image1.jpg
-│   └── ...
-├── 2/
-│   └── ...
-│
-├── manga-automation.js                  ← Script utama
-├── reset-views.js                       ← Optional
-│
-├── manga-config.json                    ← Config
-├── manga.json                           ← Auto-generated
-├── pending-views.json                   ← Data
-└── pending-chapter-views.json           ← Data
-```
-
-**Total: 6-7 files** (exclude chapter folders)
-
----
-
-## 🔄 Alur Kerja Otomatis
-
-```
-User upload chapter baru
-    ↓
-Workflow detect file baru
-    ↓
-Generate manga.json (preserve views)
-    ↓
-Sync chapters
-    ↓
-Cek pending views
-    ↓
-Commit jika threshold tercapai
-    ↓
-Website auto-update
-```
-
-**Setiap hari jam 07:00 WIB:**
-```
-Workflow jalan otomatis
-    ↓
-Update manga.json
-    ↓
-Cek pending manga views (≥20)
-    ↓
-Cek pending chapter views (≥10)
-    ↓
-Commit changes
+└── [Chapter Folders]/              # 📁 Chapter content
+    ├── 1/
+    │   ├── Image01.jpg
+    │   ├── Image02.jpg
+    │   └── ...
+    ├── 2.1/
+    ├── 2.2/
+    └── ...
 ```
 
 ---
 
-## 💾 Download & Upload
+## 📄 File Descriptions
 
-### 1. Download File dari Claude
-- Klik link file di bawah chat
-- Download semua file yang diperlukan
+### 1. `manga-config.json` 📝
 
-### 2. Upload ke Repo GitHub
+**Purpose:** Manual configuration file - the only file you need to edit manually.
+
+**Contains:**
+- Manga metadata (title, author, artist, description)
+- Cover image URL
+- Genre, status
+- Links (MangaDex, raw source)
+- Repository settings (owner, name, image format)
+- **Locked chapters list**
+
+**Example:**
+```json
+{
+  "title": "Yarikonda Renai Game...",
+  "alternativeTitle": "やり込んだ恋愛ゲーム...",
+  "cover": "https://raw.githubusercontent.com/.../cover.jpg",
+  "description": "Manga description...",
+  "author": "Kennoji",
+  "artist": "Yuuma Yun",
+  "genre": ["Seinen", "Comedy", "Romance"],
+  "status": "Ongoing",
+  "lockedChapters": ["6.2", "6.3", "6.4", "6.5"],
+  "repoOwner": "nurananto",
+  "repoName": "YarikondaRenaiGame",
+  "imagePrefix": "Image",
+  "imageFormat": "jpg"
+}
+```
+
+**When to Edit:**
+- When adding new manga information
+- When locking/unlocking chapters
+- When updating metadata
+
+---
+
+### 2. `manga.json` ⚙️
+
+**Purpose:** Auto-generated complete manga data file.
+
+**Generated By:** `manga-automation.js generate`
+
+**Contains:**
+- All manga metadata from `manga-config.json`
+- Complete chapter list with details:
+  - Title, folder name, page count
+  - Upload date (from Git history)
+  - Lock status
+  - View counts
+- Last update timestamps
+
+**Example Structure:**
+```json
+{
+  "manga": {
+    "title": "...",
+    "views": 0,
+    "...": "..."
+  },
+  "chapters": {
+    "1": {
+      "title": "Chapter 1",
+      "folder": "1",
+      "uploadDate": "2025-09-26T...",
+      "totalPages": 81,
+      "locked": false,
+      "views": 0
+    },
+    "6.5": {
+      "title": "Chapter 6.5",
+      "folder": "6.5",
+      "uploadDate": "2025-10-26T...",
+      "totalPages": 0,
+      "locked": true,
+      "views": 0
+    }
+  },
+  "lastUpdated": "2025-10-29T15:23:31.437Z",
+  "lastChapterUpdate": "2025-10-26"
+}
+```
+
+**⚠️ Do NOT Edit Manually** - This file is auto-generated and will be overwritten.
+
+---
+
+### 3. `pending-views.json` 📊
+
+**Purpose:** Track pending page views (manga info page).
+
+**Updated By:** Google Apps Script when users visit `info-manga.html`
+
+**Structure:**
+```json
+{
+  "pendingViews": 0,
+  "lastIncrement": "2025-10-24T00:00:00.000Z",
+  "lastUpdate": "2025-10-24T00:00:00.000Z"
+}
+```
+
+**How it Works:**
+1. User visits info page → Google Apps Script increments `pendingViews`
+2. When `pendingViews >= 20` → Automation adds to `manga.json` views
+3. Reset `pendingViews` to 0
+
+**Threshold:** 20 views
+
+---
+
+### 4. `pending-chapter-views.json` 📖
+
+**Purpose:** Track pending chapter views (individual chapters).
+
+**Updated By:** 
+- Google Apps Script (when users view chapters)
+- `manga-automation.js sync` (adds new chapters)
+
+**Structure:**
+```json
+{
+  "chapters": {
+    "1": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:07:30.298Z",
+      "lastUpdate": "2025-10-23T18:07:30.298Z"
+    },
+    "6.5": {
+      "pendingViews": 0,
+      "lastIncrement": "2025-10-23T18:07:30.299Z",
+      "lastUpdate": "2025-10-23T18:07:30.299Z"
+    }
+  },
+  "lastUpdated": "2025-10-29T15:23:31.484Z"
+}
+```
+
+**How it Works:**
+1. User views chapter → Google Apps Script increments chapter's `pendingViews`
+2. When `pendingViews >= 10` → Automation adds to chapter views in `manga.json`
+3. Reset chapter's `pendingViews` to 0
+
+**Threshold:** 10 views per chapter
+
+**Note:** Locked chapters also track views (to measure interest).
+
+---
+
+### 5. `manga-automation.js` 🤖
+
+**Purpose:** Node.js script for manga automation tasks.
+
+**Commands:**
+
+#### `node manga-automation.js generate`
+- Scans chapter folders
+- Generates/updates `manga.json`
+- Counts images in each folder
+- Gets upload dates from Git history
+- **Locked chapter date logic:**
+  - All locked chapters use the upload date of the **latest unlocked chapter**
+  - When you upload a new chapter, all locked chapters automatically update their dates
+
+**Example:**
 ```bash
-# Via web interface
-GitHub → Repo → Add file → Upload files
-
-# Via git command
-git add .github/workflows/manga-automation.yml
-git add manga-automation.js
-git add reset-views.js
-git commit -m "Add automation files"
-git push
+# You upload chapter 6.4 on Oct 25
+# Locked chapter 6.5 automatically gets Oct 25 as uploadDate
 ```
 
-### 3. Verify
-- Cek di repo: File ada
-- Cek Actions: Workflow terdaftar
-- Test manual: Run workflow
+#### `node manga-automation.js sync`
+- Syncs chapters between `manga.json` and `pending-chapter-views.json`
+- Adds new chapters to pending views tracking
+
+#### `node manga-automation.js update-views`
+- Checks `pending-views.json`
+- If `pendingViews >= 20`:
+  - Add to `manga.json` manga views
+  - Reset `pendingViews` to 0
+
+#### `node manga-automation.js update-chapters`
+- Checks `pending-chapter-views.json`
+- For each chapter with `pendingViews >= 10`:
+  - Add to chapter views in `manga.json`
+  - Reset chapter's `pendingViews` to 0
 
 ---
 
-## 🎯 Keunggulan Sistem Baru
+### 6. `manga-automation.yml` 🔄
 
-| Fitur | Sebelum | Sesudah |
-|-------|---------|---------|
-| **Total Files** | 12 | 6-7 |
-| **Workflow Files** | 4 | 1 |
-| **Script Files** | 4 | 1 |
-| **Schedule** | 2 hari | 1 hari |
-| **Auto-detect** | ❌ | ✅ |
-| **First-time Setup** | Manual | Otomatis |
-| **Reset Views** | Manual edit | Script |
-| **Maintenance** | Sulit | Mudah |
-| **Copy to New Repo** | 12 files | 2-3 files |
+**Purpose:** GitHub Actions workflow for automatic updates.
+
+**Location:** `.github/workflows/manga-automation.yml`
+
+**Triggers:**
+- **Push** to main branch (new chapter upload)
+- **Schedule** (daily at midnight UTC)
+- **Manual** workflow dispatch
+
+**Steps:**
+1. Generate `manga.json`
+2. Sync chapters
+3. Update manga views (if threshold reached)
+4. Update chapter views (if threshold reached)
+5. Commit and push changes
+
+**Auto-commit Messages:**
+- Push trigger: "📚 Auto-update manga data [skip ci]"
+- Schedule trigger: "📊 Daily refresh [skip ci]"
+- Manual trigger: "🔄 Manual update [skip ci]"
 
 ---
 
-## 📝 Notes
+## 🔄 Workflow
 
-- ✅ **Backward compatible**: Preserve data lama
-- ✅ **No breaking changes**: Website tetap jalan normal
-- ✅ **Easy rollback**: Simpan file lama jika perlu
-- ✅ **Well documented**: 3 guide lengkap
-- ✅ **Tested**: Auto-detect first-time
+### Adding New Chapter
 
----
-
-## 🆘 Support
-
-### Jika Ada Masalah:
-
-1. **Cek dokumentasi:**
-   - QUICK-START.md → Setup baru
-   - DAILY-UPDATE-GUIDE.md → Detail fitur
-   - MIGRATION-GUIDE.md → Update dari lama
-
-2. **Cek GitHub Actions logs:**
-   - Actions tab → Manga Automation
-   - Klik run terakhir → Lihat log
-
-3. **Test manual:**
-   ```bash
-   node manga-automation.js generate
+1. **Create chapter folder:**
+   ```
+   mkdir 6.6
    ```
 
-4. **Verify files:**
-   - manga-config.json → Valid JSON
-   - Workflow file → Di .github/workflows/
-   - Script file → Di root repo
+2. **Add images:**
+   ```
+   6.6/
+   ├── Image01.jpg
+   ├── Image02.jpg
+   └── ...
+   ```
+
+3. **Commit and push:**
+   ```bash
+   git add 6.6/
+   git commit -m "Add chapter 6.6"
+   git push
+   ```
+
+4. **Automation runs automatically:**
+   - Detects new folder
+   - Updates `manga.json`
+   - Syncs `pending-chapter-views.json`
+   - **Updates all locked chapters' uploadDate** to match this new chapter
+
+### Locking/Unlocking Chapter
+
+1. **Edit `manga-config.json`:**
+   ```json
+   {
+     "lockedChapters": ["6.5", "6.6", "6.7"]
+   }
+   ```
+
+2. **Commit and push:**
+   ```bash
+   git add manga-config.json
+   git commit -m "Lock chapters 6.5-6.7"
+   git push
+   ```
+
+3. **Automation updates `manga.json`** automatically
 
 ---
 
-## ✅ Checklist Akhir
+## 📊 View Tracking Flow
 
-Setup manga baru:
-- [ ] Download 3 file utama
-- [ ] Baca QUICK-START.md
-- [ ] Upload file ke repo
-- [ ] Edit manga-config.json
-- [ ] Test workflow
-- [ ] Verifikasi manga.json
-- [ ] Tambah ke website
-- [ ] Monitor Actions
+### Page Views
+```
+User visits info-manga.html
+         ↓
+Google Apps Script (POST request)
+         ↓
+pending-views.json: pendingViews++
+         ↓
+If pendingViews >= 20:
+         ↓
+GitHub Actions (daily check)
+         ↓
+manga.json: manga.views += pendingViews
+         ↓
+pending-views.json: pendingViews = 0
+```
 
-Migrasi dari lama:
-- [ ] Backup file lama
-- [ ] Baca MIGRATION-GUIDE.md
-- [ ] Hapus file lama
-- [ ] Upload file baru
-- [ ] Test workflow
-- [ ] Verifikasi data preserve
-- [ ] Monitor 1 hari
-
----
-
-## 🎉 Summary
-
-**Hasil Optimasi:**
-- 📦 Dari 12 files → 6 files (50% berkurang)
-- ⚡ Update setiap 1 hari (lebih cepat)
-- 🤖 Auto-detect file baru
-- 🆕 First-time setup otomatis (views = 0)
-- 🔄 Reset views dengan script
-- 📚 Dokumentasi lengkap
-
-**Benefit:**
-- ✅ Lebih mudah maintenance
-- ✅ Copy ke repo baru cepat
-- ✅ Workflow lebih efisien
-- ✅ Less file clutter
-- ✅ Automation lebih pintar
-
-**Next Steps:**
-1. Baca QUICK-START.md
-2. Setup manga baru atau migrasi
-3. Test dan monitor
-4. Enjoy! ☕
+### Chapter Views
+```
+User reads chapter in reader.html
+         ↓
+Google Apps Script (POST request)
+         ↓
+pending-chapter-views.json: chapters[X].pendingViews++
+         ↓
+If pendingViews >= 10:
+         ↓
+GitHub Actions (daily check)
+         ↓
+manga.json: chapters[X].views += pendingViews
+         ↓
+pending-chapter-views.json: chapters[X].pendingViews = 0
+```
 
 ---
 
-Made with ❤️ for Nurananto Scanlation
+## 🔒 Locked Chapter Logic
+
+**Upload Date Behavior:**
+
+All locked chapters always use the **latest unlocked chapter's upload date**.
+
+**Example Scenario:**
+
+| Action | Date | Result |
+|--------|------|--------|
+| Upload 6.3 | Oct 19 | Lock 6.4, 6.5 → both get Oct 19 |
+| Upload 6.4 | Oct 25 | Lock 6.5 → gets Oct 25 (auto-updated!) |
+| Upload 6.6 | Oct 30 | Lock 6.5 → stays Oct 25 (6.5 was unlocked) |
+
+**Why?**
+- Locked chapters appear recent in chapter lists
+- Encourages users to donate for latest content
+- Auto-updates without manual date management
+
+---
+
+## 🛠️ Manual Operations
+
+### Check View Status
+```bash
+# Check manga pending views
+cat pending-views.json
+
+# Check chapter pending views
+cat pending-chapter-views.json
+```
+
+### Force Generate manga.json
+```bash
+node manga-automation.js generate
+```
+
+### Force Update Views
+```bash
+# Update manga views (ignores threshold)
+node manga-automation.js update-views
+
+# Update chapter views (ignores threshold)
+node manga-automation.js update-chapters
+```
+
+---
+
+## 📝 Important Notes
+
+1. **Only edit `manga-config.json`** manually
+2. **All other JSON files** are auto-generated
+3. **Chapter folders** must be named with numbers (e.g., `1`, `2.1`, `6.5`)
+4. **Images** must follow naming pattern: `Image01.jpg`, `Image02.jpg`, etc.
+5. **Locked chapters track views** for analytics
+6. **Git history** is used for upload dates (don't delete .git folder)
+7. **Thresholds:** 20 for page views, 10 for chapter views
+
+---
+
+## 🔗 Integration with Main Website
+
+This repository provides data to the main website via:
+
+**Main website `manga-config.js`:**
+```javascript
+const MANGA_LIST = [
+  {
+    id: 'yarikonda',
+    title: '...',
+    cover: '...',
+    repo: 'YarikondaRenaiGame'  // ← This repo name
+  }
+];
+```
+
+**Data URLs:**
+- Manga data: `https://raw.githubusercontent.com/nurananto/YarikondaRenaiGame/main/manga.json`
+- Chapter images: `https://raw.githubusercontent.com/nurananto/YarikondaRenaiGame/main/[chapter]/Image01.jpg`
+
+---
+
+## 🎯 Summary
+
+| File | Edit? | Purpose |
+|------|-------|---------|
+| `manga-config.json` | ✅ Yes | Configuration |
+| `manga.json` | ❌ No | Auto-generated data |
+| `pending-views.json` | ❌ No | View counter |
+| `pending-chapter-views.json` | ❌ No | Chapter view counter |
+| `manga-automation.js` | ❌ No | Automation script |
+| `manga-automation.yml` | ❌ No | GitHub Actions |
+| Chapter folders | ✅ Yes | Add/remove chapters |
+
+**Workflow:** Upload chapters → GitHub Actions → Auto-update everything! 🚀

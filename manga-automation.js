@@ -227,8 +227,8 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         console.log('🆕 First-time generation detected - setting all views to 0');
     }
     
-    // Track latest upload date for locked chapters
-    let latestUploadDate = null;
+    // Find latest uploadDate from UNLOCKED chapters only
+    let latestUnlockedUploadDate = null;
     
     sortedChapterNames.forEach(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
@@ -246,19 +246,25 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
             }
         }
         
-        // Preserve uploadDate from old data, only get from Git if not exists
+        // Get uploadDate
         let uploadDate = null;
         const oldChapter = oldMangaData?.chapters?.[chapterName];
         
-        if (oldChapter && oldChapter.uploadDate) {
-            uploadDate = oldChapter.uploadDate;
-        } else if (folderExists) {
-            uploadDate = getUploadDate(chapterName);
-        }
-        
-        // Track latest date for locked chapters
-        if (uploadDate && (!latestUploadDate || uploadDate > latestUploadDate)) {
-            latestUploadDate = uploadDate;
+        if (folderExists) {
+            // For unlocked chapters: get from Git or preserve old
+            if (oldChapter && oldChapter.uploadDate) {
+                uploadDate = oldChapter.uploadDate;
+            } else {
+                uploadDate = getUploadDate(chapterName);
+            }
+            
+            // Track latest date from UNLOCKED chapters only
+            if (!actuallyLocked && uploadDate && (!latestUnlockedUploadDate || uploadDate > latestUnlockedUploadDate)) {
+                latestUnlockedUploadDate = uploadDate;
+            }
+        } else if (actuallyLocked) {
+            // For locked chapters: will be updated later
+            uploadDate = oldChapter?.uploadDate || null;
         }
         
         const chapterNum = parseFloat(chapterName);
@@ -278,14 +284,16 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         };
     });
     
-    // Update locked chapters with null uploadDate to use latest date (matches YML)
-    if (latestUploadDate) {
-        console.log(`\n📅 Updating locked chapters with null uploadDate to: ${latestUploadDate}`);
+    // Update ALL locked chapters to use latest UNLOCKED chapter date
+    if (latestUnlockedUploadDate) {
+        console.log(`\n📅 Latest unlocked chapter date: ${latestUnlockedUploadDate}`);
+        console.log('🔒 Updating all locked chapters to use this date:');
+        
         Object.keys(chapters).forEach(chapterKey => {
             const chapter = chapters[chapterKey];
-            if (chapter.locked && !chapter.uploadDate) {
-                chapter.uploadDate = latestUploadDate;
-                console.log(`  ✅ ${chapter.title}: uploadDate updated`);
+            if (chapter.locked) {
+                chapter.uploadDate = latestUnlockedUploadDate;
+                console.log(`  ✅ ${chapter.title}: uploadDate = ${latestUnlockedUploadDate}`);
             }
         });
     }
@@ -333,7 +341,7 @@ function commandGenerate() {
     // Preserve ALL manga metadata
     const oldMangaInfo = oldMangaData?.manga || {};
     const mangaInfo = {
-        ...oldMangaInfo,  // Preserve all existing fields
+        ...oldMangaInfo,
         title: oldMangaInfo.title || config.title,
         alternativeTitle: oldMangaInfo.alternativeTitle || config.alternativeTitle,
         cover: oldMangaInfo.cover || config.cover,
@@ -426,10 +434,10 @@ function commandSync() {
                 lastIncrement: new Date().toISOString(),
                 lastUpdate: new Date().toISOString()
             };
-            console.log(`  ✓ Added new chapter: ${chapterKey}`);
+            console.log(`  ✔ Added new chapter: ${chapterKey}`);
             addedCount++;
         } else {
-            console.log(`  ✓ Chapter ${chapterKey} already exists`);
+            console.log(`  ✔ Chapter ${chapterKey} already exists`);
         }
     });
     
@@ -479,7 +487,7 @@ function commandUpdateViews() {
         
         if (saveJSON('pending-views.json', pendingData)) {
             console.log(`✅ Views updated! Total: ${manga.manga.views}`);
-            console.log(`📄 Pending views reset to 0`);
+            console.log(`🔄 Pending views reset to 0`);
         }
     } else {
         process.exit(1);
@@ -505,6 +513,7 @@ function commandUpdateChapterViews() {
     
     let hasChanges = false;
     let updatedChapters = 0;
+    let updatedLockedChapters = 0;
     
     Object.keys(pendingData.chapters).forEach(chapterFolder => {
         const pendingChapterData = pendingData.chapters[chapterFolder];
@@ -516,9 +525,15 @@ function commandUpdateChapterViews() {
         }
         
         const chapter = manga.chapters[chapterFolder];
+        const isLocked = chapter.locked || false;
         
         if (pendingViews >= CHAPTER_VIEW_THRESHOLD) {
-            console.log(`✅ Chapter ${chapterFolder}: Threshold reached! (${pendingViews}/${CHAPTER_VIEW_THRESHOLD})`);
+            if (isLocked) {
+                console.log(`🔒 Locked Chapter ${chapterFolder}: Threshold reached! (${pendingViews}/${CHAPTER_VIEW_THRESHOLD})`);
+                updatedLockedChapters++;
+            } else {
+                console.log(`✅ Chapter ${chapterFolder}: Threshold reached! (${pendingViews}/${CHAPTER_VIEW_THRESHOLD})`);
+            }
             
             chapter.views = (chapter.views || 0) + pendingViews;
             
@@ -530,7 +545,8 @@ function commandUpdateChapterViews() {
             hasChanges = true;
             updatedChapters++;
         } else {
-            console.log(`⏳ Chapter ${chapterFolder}: Waiting... (${pendingViews}/${CHAPTER_VIEW_THRESHOLD})`);
+            const icon = isLocked ? '🔒' : '⏳';
+            console.log(`${icon} Chapter ${chapterFolder}: Waiting... (${pendingViews}/${CHAPTER_VIEW_THRESHOLD})`);
         }
     });
     
@@ -539,7 +555,10 @@ function commandUpdateChapterViews() {
         
         if (saveJSON('manga.json', manga) && saveJSON('pending-chapter-views.json', pendingData)) {
             console.log(`\n✅ Updated ${updatedChapters} chapter(s)!`);
-            console.log(`📄 Files written successfully`);
+            if (updatedLockedChapters > 0) {
+                console.log(`🔒 Including ${updatedLockedChapters} locked chapter(s)`);
+            }
+            console.log(`🔄 Files written successfully`);
         } else {
             process.exit(1);
         }
@@ -555,10 +574,10 @@ function commandUpdateChapterViews() {
 function main() {
     const command = process.argv[2];
     
-    console.log('═══════════════════════════════════════');
-    console.log('     MANGA AUTOMATION SCRIPT v3.0     ');
-    console.log('   Compatible with YML Automation     ');
-    console.log('═══════════════════════════════════════\n');
+    console.log('╔═══════════════════════════════════════╗');
+    console.log('     MANGA AUTOMATION SCRIPT v3.1     ');
+    console.log('   Locked Chapters Follow Latest Date   ');
+    console.log('╚═══════════════════════════════════════╝\n');
     
     switch (command) {
         case 'generate':
