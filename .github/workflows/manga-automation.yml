@@ -12,9 +12,14 @@ on:
       - 'manga-config.json'
   
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '17 0 * * *'  # 00:17 WIB
   
   workflow_dispatch:
+  
+  workflow_run:
+    workflows: ["Sync Cover from Website"]
+    types:
+      - completed
 
 permissions:
   contents: write
@@ -45,70 +50,15 @@ jobs:
       - name: 📖 Update chapter views
         run: node manga-automation.js update-chapters
       
-      - name: 💾 Commit and push changes
+      - name: 💾 Commit and push
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
           git pull origin main --rebase || true
           git add manga.json manga-config.json pending-views.json pending-chapter-views.json 2>/dev/null || true
-          
           if git diff --staged --quiet; then
-            echo "✅ No changes to commit"
+            echo "✅ No changes"
           else
-            if [ "${{ github.event_name }}" = "push" ]; then
-              COMMIT_MSG="📚 Auto-update manga data [skip ci]"
-            elif [ "${{ github.event_name }}" = "schedule" ]; then
-              COMMIT_MSG="📊 Daily refresh [skip ci]"
-            else
-              COMMIT_MSG="🔄 Manual update [skip ci]"
-            fi
-            
-            git commit -m "$COMMIT_MSG"
-            
-            max_retries=3
-            count=0
-            until git push origin main; do
-              count=$((count+1))
-              if [ $count -eq $max_retries ]; then
-                echo "❌ Failed to push after $max_retries attempts"
-                exit 1
-              fi
-              echo "⚠️  Retrying push... (attempt $count/$max_retries)"
-              sleep 5
-              git pull origin main --rebase
-            done
-            
-            echo "✅ Successfully pushed changes"
+            git commit -m "📊 Auto-update [skip ci]"
+            git push origin main
           fi
-      
-      - name: 📊 Show Summary
-        if: always()
-        run: |
-          echo ""
-          echo "╔═════════════════════════════════════════╗"
-          echo "║       AUTOMATION SUMMARY               ║"
-          echo "╚═════════════════════════════════════════╝"
-          echo "Trigger: ${{ github.event_name }}"
-          echo "Time: $(date)"
-          echo ""
-          
-          if [ -f manga.json ]; then
-            echo "📊 Manga Stats:"
-            MANGA_TITLE=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).manga.title")
-            TOTAL_CHAPTERS=$(node -p "Object.keys(JSON.parse(require('fs').readFileSync('manga.json')).chapters).length")
-            LAST_UPDATE=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).lastChapterUpdate || 'N/A'")
-            MANGA_VIEWS=$(node -p "JSON.parse(require('fs').readFileSync('manga.json')).manga.views || 0")
-            
-            echo "  📚 Title: $MANGA_TITLE"
-            echo "  📖 Chapters: $TOTAL_CHAPTERS"
-            echo "  📅 Last Update: $LAST_UPDATE"
-            echo "  👁️  Views: $MANGA_VIEWS"
-          fi
-          
-          if [ -f pending-views.json ]; then
-            PENDING_VIEWS=$(node -p "JSON.parse(require('fs').readFileSync('pending-views.json')).pendingViews || 0")
-            echo "  ⏳ Pending Views: $PENDING_VIEWS / 20"
-          fi
-          
-          echo "╚═════════════════════════════════════════╝"

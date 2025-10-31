@@ -87,3 +87,12 @@ jobs:
           git push
           
           echo "🎉 Cover synced successfully!"
+      
+      - name: ✅ Complete
+        run: |
+          if [[ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]]; then
+            echo "✅ Cover URL updated"
+          else
+            echo "ℹ️ Cover URL unchanged (already synced)"
+          fi
+          echo "🔄 manga-automation.yml will trigger automatically"
