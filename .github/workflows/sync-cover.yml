@@ -1,0 +1,89 @@
+name: Sync Cover from Website
+
+on:
+  repository_dispatch:
+    types: [sync-covers]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-cover:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔧 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: 📥 Sync Cover URL
+        run: |
+          echo "🔍 Fetching latest cover info from website..."
+          
+          # Get repo name from GitHub context
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          
+          # Fetch manga-config.js from website
+          WEBSITE_CONFIG_URL="https://raw.githubusercontent.com/nurananto/NuranantoScanlation/main/manga-config.js"
+          curl -s "$WEBSITE_CONFIG_URL" -o /tmp/website-config.js
+          
+          # Extract cover URL for this repo
+          COVER_URL=$(node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('/tmp/website-config.js', 'utf-8');
+            const vm = require('vm');
+            const sandbox = { MANGA_LIST: null };
+            vm.createContext(sandbox);
+            vm.runInContext(content, sandbox);
+            const manga = sandbox.MANGA_LIST.find(m => m.repo === '${REPO_NAME}');
+            if (manga && manga.cover) {
+              const fullUrl = 'https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/' + manga.cover;
+              console.log(fullUrl);
+            }
+          ")
+          
+          if [ -z "$COVER_URL" ]; then
+            echo "⚠️ No cover URL found for this repo"
+            exit 0
+          fi
+          
+          echo "✅ Found cover: $COVER_URL"
+          
+          # Update manga-config.json
+          if [ -f manga-config.json ]; then
+            node -e "
+              const fs = require('fs');
+              const config = JSON.parse(fs.readFileSync('manga-config.json', 'utf-8'));
+              config.cover = '${COVER_URL}';
+              fs.writeFileSync('manga-config.json', JSON.stringify(config, null, 2));
+            "
+            echo "✅ Updated manga-config.json"
+          fi
+      
+      - name: 🔍 Check for Changes
+        id: check_changes
+        run: |
+          if [[ -n $(git status -s manga-config.json) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 💾 Commit and Push
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add manga-config.json
+          git commit -m "🤖 Auto-sync cover from website"
+          git push
+          
+          echo "🎉 Cover synced successfully!"

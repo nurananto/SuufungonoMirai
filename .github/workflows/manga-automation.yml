@@ -51,7 +51,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
           git pull origin main --rebase || true
-          git add manga.json pending-views.json pending-chapter-views.json 2>/dev/null || true
+          git add manga.json manga-config.json pending-views.json pending-chapter-views.json 2>/dev/null || true
           
           if git diff --staged --quiet; then
             echo "✅ No changes to commit"

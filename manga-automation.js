@@ -26,18 +26,17 @@ const CHAPTER_VIEW_THRESHOLD = 10;
 // ============================================
 
 function getWIBTimestamp() {
-    const now = new Date();
-    // Convert to WIB (UTC+7)
-    const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-    return wibTime.toISOString();
+    // Use toLocaleString with Asia/Jakarta timezone
+    const date = new Date();
+    const wibStr = date.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace(' ', 'T');
+    return wibStr + '+07:00';
 }
 
 function convertToWIB(isoString) {
     if (!isoString) return null;
     const date = new Date(isoString);
-    // Convert to WIB (UTC+7)
-    const wibTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
-    return wibTime.toISOString();
+    const wibStr = date.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace(' ', 'T');
+    return wibStr + '+07:00';
 }
 
 // ============================================
@@ -202,9 +201,16 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     
     sortedChapterNames.forEach(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
-        const isLocked = config.lockedChapters.includes(chapterName);
-        
         const totalPages = folderExists ? countImagesInFolder(chapterName) : 0;
+        
+        // ============================================
+        // FIX: Chapter is locked ONLY if:
+        // 1. In lockedChapters list AND
+        // 2. Folder doesn't exist OR has no images
+        // ============================================
+        const isInLockedList = config.lockedChapters.includes(chapterName);
+        const isLocked = isInLockedList && totalPages === 0;
+        
         const uploadDate = folderExists ? getUploadDate(chapterName, isLocked) : getWIBTimestamp();
         
         // Preserve views from old data
@@ -235,6 +241,29 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     });
     
     // ============================================
+    // AUTO-CLEANUP: Remove uploaded chapters from lockedChapters
+    // ============================================
+    const updatedLockedChapters = config.lockedChapters.filter(chapterName => {
+        const folderExists = checkIfFolderExists(chapterName);
+        const totalPages = folderExists ? countImagesInFolder(chapterName) : 0;
+        return totalPages === 0;  // Keep only if no images
+    });
+    
+    // Update config file if lockedChapters changed
+    if (updatedLockedChapters.length !== config.lockedChapters.length) {
+        console.log('\n🔓 Auto-removing uploaded chapters from lockedChapters...');
+        const removed = config.lockedChapters.filter(ch => !updatedLockedChapters.includes(ch));
+        console.log(`   Removed: ${removed.join(', ')}`);
+        
+        config.lockedChapters = updatedLockedChapters;
+        
+        // Save updated config
+        if (saveJSON('manga-config.json', config)) {
+            console.log('✅ manga-config.json updated');
+        }
+    }
+    
+    // ============================================
     // FIX: Find LATEST upload date from unlocked chapters
     // ============================================
     let lastChapterUpdate = null;
@@ -245,12 +274,12 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
             return new Date(b.uploadDate) - new Date(a.uploadDate);
         });
         
-        lastChapterUpdate = unlockedChaptersWithDates[0].uploadDate.split('T')[0];
+        lastChapterUpdate = unlockedChaptersWithDates[0].uploadDate;  // ← KEEP FULL TIMESTAMP
         
         console.log(`\n✅ Last chapter update: ${lastChapterUpdate} (from chapter ${unlockedChaptersWithDates[0].chapterName})`);
     } else {
         console.log('\n⚠️  No unlocked chapters found, using current date');
-        lastChapterUpdate = getWIBTimestamp().split('T')[0];
+        lastChapterUpdate = getWIBTimestamp();  // ← KEEP FULL TIMESTAMP
     }
     
     return { chapters, lastChapterUpdate };
