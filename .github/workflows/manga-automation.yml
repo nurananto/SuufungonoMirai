@@ -10,6 +10,7 @@ on:
       - '**/*.png'
       - '**/*.webp'
       - 'manga-config.json'
+      - 'manga.json'  # ← TAMBAH INI untuk detect locked chapter changes
   
   schedule:
     - cron: '17 0 * * *'  # 00:17 WIB

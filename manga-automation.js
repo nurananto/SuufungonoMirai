@@ -19,8 +19,8 @@ const { execSync } = require('child_process');
 // CONSTANTS
 // ============================================
 
-const VIEW_THRESHOLD = 20;
-const CHAPTER_VIEW_THRESHOLD = 10;
+const VIEW_THRESHOLD = 1;  // Update every 1 manga view (was 20)
+const CHAPTER_VIEW_THRESHOLD = 1;  // Update every 1 chapter view (was 10)
 
 // ============================================
 // WIB TIMEZONE HELPER (GMT+7)
@@ -219,6 +219,26 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     const allFolders = getChapterFolders();
     const chapters = {};
     
+    // 🔥 AUTO-CLEANUP: Remove old locked chapters that are no longer in config
+    let removedLockedChapters = [];
+    if (oldMangaData && oldMangaData.chapters) {
+        Object.keys(oldMangaData.chapters).forEach(chapterName => {
+            const oldChapter = oldMangaData.chapters[chapterName];
+            const folderExists = checkIfFolderExists(chapterName);
+            const inCurrentConfig = config.lockedChapters.includes(chapterName);
+            
+            // If chapter was locked, has no folder, and removed from config → delete it
+            if (oldChapter.locked && !folderExists && !inCurrentConfig) {
+                removedLockedChapters.push(chapterName);
+            }
+        });
+        
+        if (removedLockedChapters.length > 0) {
+            console.log('\n🗑️  Auto-removing deleted locked chapters...');
+            console.log(`   Removed: ${removedLockedChapters.join(', ')}`);
+        }
+    }
+    
     const allChapterNames = new Set([
         ...allFolders,
         ...config.lockedChapters
@@ -243,7 +263,23 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         const isInLockedList = config.lockedChapters.includes(chapterName);
         const isLocked = isInLockedList && totalPages === 0;
         
-        const uploadDate = folderExists ? getUploadDate(chapterName, isLocked) : getWIBTimestamp();
+        // For locked chapters: preserve old date or use NOW if new
+        let uploadDate;
+        if (isLocked && !folderExists) {
+            // Check if chapter existed before
+            const oldChapter = oldMangaData && oldMangaData.chapters && oldMangaData.chapters[chapterName];
+            if (oldChapter && oldChapter.uploadDate) {
+                // Keep old date (locked chapter already existed)
+                uploadDate = oldChapter.uploadDate;
+            } else {
+                // New locked chapter - use NOW
+                uploadDate = getWIBTimestamp();
+            }
+        } else {
+            // Unlocked chapter - use folder date
+            uploadDate = folderExists ? getUploadDate(chapterName, isLocked) : getWIBTimestamp();
+        }
+        
         const views = isFirstTime ? 0 : getOldChapterViews(chapterName, oldMangaData);
         
         chapters[chapterName] = {
@@ -289,18 +325,29 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         }
     }
     
+    // 🔥 CALCULATE lastChapterUpdate FROM ALL CHAPTERS (unlocked + locked)
     let lastChapterUpdate = null;
     
-    if (unlockedChaptersWithDates.length > 0) {
-        unlockedChaptersWithDates.sort((a, b) => {
+    // Get ALL chapter dates (including locked)
+    const allChapterDates = Object.values(chapters).map(ch => ({
+        chapterName: ch.folder,
+        uploadDate: ch.uploadDate,
+        locked: ch.locked
+    }));
+    
+    if (allChapterDates.length > 0) {
+        // Sort by date (newest first)
+        allChapterDates.sort((a, b) => {
             return new Date(b.uploadDate) - new Date(a.uploadDate);
         });
         
-        lastChapterUpdate = unlockedChaptersWithDates[0].uploadDate;
+        // Use the NEWEST chapter (locked or unlocked)
+        lastChapterUpdate = allChapterDates[0].uploadDate;
         
-        console.log(`\n✅ Last chapter update: ${lastChapterUpdate} (from chapter ${unlockedChaptersWithDates[0].chapterName})`);
+        const lockIcon = allChapterDates[0].locked ? '🔒' : '✅';
+        console.log(`\n${lockIcon} Last chapter update: ${lastChapterUpdate} (from ${allChapterDates[0].locked ? 'LOCKED' : 'unlocked'} chapter ${allChapterDates[0].chapterName})`);
     } else {
-        console.log('\n⚠️  No unlocked chapters found, using current date');
+        console.log('\n⚠️  No chapters found, using current date');
         lastChapterUpdate = getWIBTimestamp();
     }
     
