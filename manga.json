@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "Ongoing",
-    "views": 72,
+    "views": 77,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -25,9 +25,7 @@
     "repoUrl": "https://raw.githubusercontent.com/nurananto/SuufungonoMirai/main/",
     "imagePrefix": "Image",
     "imageFormat": "jpg",
-    "lockedChapters": [
-      "13.1"
-    ]
+    "lockedChapters": []
   },
   "chapters": {
     "4.1": {
@@ -208,19 +206,9 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 27
-    },
-    "13.1": {
-      "title": "Chapter 13.1",
-      "chapter": 13.1,
-      "folder": "13.1",
-      "uploadDate": "2025-11-07T09:15:00+07:00",
-      "totalPages": 0,
-      "pages": 0,
-      "locked": true,
-      "views": 7
+      "views": 29
     }
   },
-  "lastUpdated": "2025-11-08T09:03:08+07:00",
-  "lastChapterUpdate": "2025-11-07T09:15:00+07:00"
+  "lastUpdated": "2025-11-08T20:58:38+07:00",
+  "lastChapterUpdate": "2025-10-16T04:36:00+07:00"
 }
