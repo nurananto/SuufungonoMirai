@@ -271,9 +271,11 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
             if (oldChapter && oldChapter.uploadDate) {
                 // Keep old date (locked chapter already existed)
                 uploadDate = oldChapter.uploadDate;
+                console.log(`🔒 Keeping old date for locked ${chapterName}: ${uploadDate}`);
             } else {
                 // New locked chapter - use NOW
                 uploadDate = getWIBTimestamp();
+                console.log(`🔒 NEW locked chapter ${chapterName}: ${uploadDate}`);
             }
         } else {
             // Unlocked chapter - use folder date
