@@ -1,9 +1,9 @@
 {
   "chapters": {
     "4.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-02T05:57:49.613Z",
-      "lastUpdate": "2025-10-23T18:08:41.633Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "4.2": {
       "pendingViews": 0,
@@ -61,40 +61,40 @@
       "lastUpdate": "2025-10-23T18:08:41.634Z"
     },
     "10.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-01T11:04:10.888Z",
-      "lastUpdate": "2025-10-23T18:08:41.634Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "10.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-02T00:25:52.751Z",
-      "lastUpdate": "2025-10-23T18:08:41.634Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "11.1": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-02T00:29:53.794Z",
-      "lastUpdate": "2025-10-23T18:08:41.634Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "11.2": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-02T00:30:20.391Z",
-      "lastUpdate": "2025-10-23T18:08:41.634Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "12.1": {
-      "pendingViews": 4,
+      "pendingViews": 0,
       "lastIncrement": "2025-11-02T00:31:19.452Z",
-      "lastUpdate": "2025-10-23T18:08:41.635Z"
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "12.2": {
       "pendingViews": 2,
-      "lastIncrement": "2025-11-06T12:29:18.627Z",
-      "lastUpdate": "2025-11-05T09:16:46+07:00"
+      "lastIncrement": "2025-11-08T13:23:17.079Z",
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     },
     "13.1": {
-      "pendingViews": 7,
-      "lastIncrement": "2025-11-03T13:19:04.697Z",
-      "lastUpdate": "2025-10-23T18:08:41.635Z"
+      "pendingViews": 1,
+      "lastIncrement": "2025-11-08T11:43:28.397Z",
+      "lastUpdate": "2025-11-08T09:03:08+07:00"
     }
   },
-  "lastUpdated": "2025-11-07T09:15:00+07:00"
+  "lastUpdated": "2025-11-08T09:03:07+07:00"
 }
