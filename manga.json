@@ -207,8 +207,18 @@
       "pages": 15,
       "locked": false,
       "views": 44
+    },
+    "13.1": {
+      "title": "Chapter 13.1",
+      "chapter": 13.1,
+      "folder": "13.1",
+      "uploadDate": "2025-11-14T09:40:57+07:00",
+      "totalPages": 15,
+      "pages": 15,
+      "locked": false,
+      "views": 1
     }
   },
-  "lastUpdated": "2025-11-14T09:16:51+07:00",
-  "lastChapterUpdate": "2025-10-16T04:36:00+07:00"
+  "lastUpdated": "2025-11-14T09:41:18+07:00",
+  "lastChapterUpdate": "2025-11-14T09:40:57+07:00"
 }
