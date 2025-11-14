@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "Ongoing",
-    "views": 72,
+    "views": 103,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -25,9 +25,7 @@
     "repoUrl": "https://raw.githubusercontent.com/nurananto/SuufungonoMirai/main/",
     "imagePrefix": "Image",
     "imageFormat": "jpg",
-    "lockedChapters": [
-      "13.1"
-    ]
+    "lockedChapters": []
   },
   "chapters": {
     "4.1": {
@@ -38,7 +36,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 2
+      "views": 3
     },
     "4.2": {
       "title": "Chapter 4.2",
@@ -48,7 +46,7 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 0
+      "views": 1
     },
     "5.1": {
       "title": "Chapter 5.1",
@@ -58,7 +56,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 0
+      "views": 1
     },
     "5.2": {
       "title": "Chapter 5.2",
@@ -68,7 +66,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 0
+      "views": 1
     },
     "6.1": {
       "title": "Chapter 6.1",
@@ -198,7 +196,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 4
+      "views": 5
     },
     "12.2": {
       "title": "Chapter 12.2",
@@ -208,19 +206,9 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 27
-    },
-    "13.1": {
-      "title": "Chapter 13.1",
-      "chapter": 13.1,
-      "folder": "13.1",
-      "uploadDate": "2025-11-07T09:15:00+07:00",
-      "totalPages": 0,
-      "pages": 0,
-      "locked": true,
-      "views": 7
+      "views": 44
     }
   },
-  "lastUpdated": "2025-11-08T09:03:08+07:00",
-  "lastChapterUpdate": "2025-11-07T09:15:00+07:00"
+  "lastUpdated": "2025-11-14T09:16:51+07:00",
+  "lastChapterUpdate": "2025-10-16T04:36:00+07:00"
 }
