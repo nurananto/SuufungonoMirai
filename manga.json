@@ -2,7 +2,7 @@
   "manga": {
     "title": "Suufungo no Mirai ga Wakaru You ni Natta kedo, Onnagokoro wa Wakaranai.",
     "alternativeTitle": "数分後の未来が分かるようになったけど、女心は分からない。",
-    "cover": "https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.jpg",
+    "cover": "https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.webp",
     "description": "Arase Itou bisa melihat beberapa menit ke depan. Namun, masa depan yang ia lihat selalu berhubungan dengan masalah. Arase yang baik hati berusaha menghindari masa depan yang tidak menyenangkan ini, namun pada akhirnya masalah tersebut tetap membuatnya membantu berbagai gadis dengan masalah mereka. Tanpa ia sadari, para gadis mulai menyukainya. Arase tidak menyadari bahwa, diam-diam, para gadis bersaing untuk memperebutkannya.",
     "author": "MTY",
     "artist": "You2",
@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "Ongoing",
-    "views": 252,
+    "views": 258,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -206,7 +206,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 74
+      "views": 75
     },
     "13.1": {
       "title": "Chapter 13.1",
@@ -216,9 +216,9 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 72
+      "views": 73
     }
   },
-  "lastUpdated": "2025-11-18T09:16:08+07:00",
+  "lastUpdated": "2025-11-19T00:41:08+07:00",
   "lastChapterUpdate": "2025-11-14T09:40:57+07:00"
 }
