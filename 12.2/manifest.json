@@ -3,20 +3,22 @@
   "upload_date": "2025-11-25 19:43:33",
   "total_pages": 15,
   "pages": [
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image01.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image02.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image03.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image04.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image05.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image06.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image07.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image08.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image09.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image10.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image11.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image12.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image13.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image14.webp",
-    "https://cdn.nuranantoscans.my.id/SuufungonoMirai/12.2/Image15.webp"
-  ]
+    "c94f827cdd0adf1e5c20093404c32819:bb2e0231c77cab68f3a432ef81363fffeb5fdc17b57a5f002f930d1099f0e6bfbf534f9917277e5c6fc181d5c47a446a17b917a798b967c8b96e5c7a2b36bb665a65c38a4b9d4b6a6afd864d0565a1fe",
+    "c99cc75adcf5290ee93eabdb7b90177a:c63575722ab4d2e74d3b490d12335c5befa52f58aed8631c69a9cdddcc97ea54b3666fc030fb68d938e1d10a6af40487442fe096127053c01d3e4a16e37efca21a1a0ac67b440d22b309cac768b56824",
+    "60a1503771b83b00708ab6f4eda5ecbe:5da959812d5b2efc3d700eb4ee554dfdbd0f104a172e0df246fc1260e03f8952d4c1e988ef0af3cb9adcdb62d932b80ab7d6d94743a5c4c05cd32916573714c8343f0a85d292be75c71350095db52910",
+    "303affc633bbf58ff5b5fa24fe3ccdb2:0c5234a0c18ee6074a6ebb43edc440492de6a428882925c257e984d9fffe04efc62747e85adc3dff5137bd159019689e8a2e7db132ea71bdaa0cd8aa411c19db518536864d0b6cbd8ab4d6f570a8eb7b",
+    "603bbe6bfe48240a470cfa4e273c800a:712644a4d311e43becb621fb358591dde1a2e59e806832229bf1487eac4de442a273fb8f5f06e273e8cfc1331860fdc51d05b79c40893f5653a227e1a38082f2dd1c5a1db97243049cfae572c647a45d",
+    "daf3de0413251964055defb8f0f4dc8c:246ff00d12b41d37112d1038bc2abe928a4fd009b36d8a8b4e08bcbbac3d671d08856d74ef99b3380672751c348a7628db6685cbeb5d656097927c219b1fce3fd266852d7ada4e5ddc1e2bc00f8a768d",
+    "e5a6379c45ec90f0a6e0b1028940d276:50398e709ed39c5cf6bd4a6360e90c9c57d11bb976ae88e193406acf0699baa47d1ae80be124a294657f03d5bb899218b0388d45c4396a488638c2320b37fd4e8092ef22b2fc58afcaaf82e2a7dea0fb",
+    "6bcd1c3f4ece4abe8de0bdd801159ebb:7127be686b7cac4da37e241d7b1dafb5c1b04f3685b8ebda45d328430de0a98acc79f6f40d40c2d217b7ccc77414d51e0cd768ade38458b3617da93ec49ea851cb7266b9c89117a7f3145e1b4da56665",
+    "d0196d02d37f154576b136807b72f5e0:090b90a226dff7715a7b628013e734f01c71324ba8a4b0414026ea0551d38c87eba898a7b4010f877a502fe7cfcc34fd3fc8516ab0e254d2b018ffb71d8047f33ff07cabc61226b0635eda5c88c01777",
+    "da23d7b86d78f79360390c50a6e75ed3:c9439a132de57339f990c8d0910f83623d9d49ce1ef369078c5534e04fa02b86593b6d50a5d05f17192b1308c14746980115ac15e0c37ffc2c15dbc5274b2c7fac2fbec09457763e52b59bf15fb42fa2",
+    "646c43e26532ddfc3417f61f4d26d106:da761bd79ec15ec70f930ce2dd7b27c484741bf2b7b7486e566ad1b7b21af9c1082d50f2813373265ec590d6598c7ead1c6b242457a7e74f9f49ca8f73e8d96924acbb7d90dbd929f5faeea291bb02bf",
+    "95481a2036d4daaa0fa157edb1677bfa:8b64c0b1452a6c860ec17c94c68a0fa0e2ec11f92802ca582fe76b4f7fd657be87919d4465f694cf4f534d9aafefdd5180304dadf7c6544d61f9303975e8d2949898145a7a2420e4f985ee58d085fe34",
+    "ab958897a6d9f475fd9c99c5067f5b6a:d5314ca3d8d722228564cd5d9702ec87baeb4f6357ff272b872265b3540c56e41bfad1a9909a16fa9eef9398e4f0edee03d14e1616614b9f5e49769f69fffe2d2ee298831926e942a406347e7adf5f3b",
+    "5cda65aeba959b5d3ed33f7f74eed137:1b98d2e9ad2bd4af654393729ee30c23cbd45749345df50a51d283e505a162152bc6573da404bc4e2b90b6d634a77c98cc815c102f1ecac3ee068ca0a630a3a7dfef5131e7858a0f6464c7c04778b847",
+    "80239e1e52aef0c183de49b7aa510d80:cb1c5652820e656535b1953dac4a7d22df0588342188696a04fe30cc201c4e407baa9668d2e9fd29eb4e76947aeefa401ebdd2da449d5ce8bb299d95e5364cfd9ee5854a0e970daca31830219ce2217a"
+  ],
+  "encrypted": true,
+  "encryption_version": "1.0"
 }
