@@ -1,6 +1,7 @@
 /**
- * MANGA-AUTOMATION.JS - ONESHOT SUPPORT VERSION
- * ✅ Fix: lastChapterUpdate uses LATEST unlocked chapter date (not stuck)
+ * MANGA-AUTOMATION.JS - MANIFEST-BASED VERSION
+ * ✅ Fix: Uses manifest.json instead of counting images
+ * ✅ Fix: lastChapterUpdate uses LATEST unlocked chapter date
  * ✅ Fix: All timestamps converted to WIB (GMT+7)
  * ✅ NEW: Support for "oneshot" folder
  * 
@@ -113,6 +114,42 @@ function getChapterNumber(folderName) {
 }
 
 // ============================================
+// NEW: MANIFEST HELPER FUNCTIONS
+// ============================================
+
+function loadManifest(folderName) {
+    const manifestPath = path.join('.', folderName, 'manifest.json');
+    
+    try {
+        if (fs.existsSync(manifestPath)) {
+            const data = fs.readFileSync(manifestPath, 'utf8');
+            const manifest = JSON.parse(data);
+            return manifest;
+        }
+    } catch (error) {
+        console.warn(`⚠️ Could not read manifest in ${folderName}:`, error.message);
+    }
+    return null;
+}
+
+function getTotalPagesFromManifest(folderName) {
+    const manifest = loadManifest(folderName);
+    
+    if (manifest) {
+        // Try multiple possible fields
+        const totalPages = manifest.total_pages || manifest.totalPages || 
+                          (manifest.pages ? manifest.pages.length : 0);
+        
+        const icon = isOneshotFolder(folderName) ? '🎯' : '📊';
+        console.log(`  ${icon} ${folderName}: ${totalPages} pages (from manifest)`);
+        return totalPages;
+    }
+    
+    console.log(`  ⚠️  ${folderName}: No manifest.json found`);
+    return 0;
+}
+
+// ============================================
 // COMMAND 1: GENERATE MANGA.JSON
 // ============================================
 
@@ -145,26 +182,6 @@ function getChapterFolders() {
     }
 }
 
-function countImagesInFolder(folderName) {
-    const folderPath = path.join('.', folderName);
-    
-    try {
-        const files = fs.readdirSync(folderPath);
-        const imageFiles = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
-            return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
-        });
-        
-        const icon = isOneshotFolder(folderName) ? '🎯' : '📊';
-        console.log(`  ${icon} ${folderName}: ${imageFiles.length} images`);
-        return imageFiles.length;
-        
-    } catch (error) {
-        console.error(`  ⚠️  Error reading folder ${folderName}:`, error.message);
-        return 0;
-    }
-}
-
 function checkIfFolderExists(folderName) {
     return fs.existsSync(path.join('.', folderName));
 }
@@ -174,18 +191,18 @@ function getUploadDate(folderName, isLocked) {
     
     try {
         if (!isLocked) {
-            // UNLOCKED: Get date from FIRST IMAGE commit (when images were added)
-            const imageGitCommand = `git log --reverse --format=%aI -- "${folderName}/*.jpg" "${folderName}/*.jpeg" "${folderName}/*.png" "${folderName}/*.webp" 2>/dev/null | head -1`;
-            const imageResult = execSync(imageGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+            // UNLOCKED: Get date from manifest.json commit (when manifest was added)
+            const manifestGitCommand = `git log --reverse --format=%aI -- "${folderName}/manifest.json" 2>/dev/null | head -1`;
+            const manifestResult = execSync(manifestGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
             
-            if (imageResult) {
-                const icon = isOneshotFolder(folderName) ? '🎯' : '🖼️';
-                console.log(`  ${icon} Using first image commit date for ${folderName}`);
-                return convertToWIB(imageResult);
+            if (manifestResult) {
+                const icon = isOneshotFolder(folderName) ? '🎯' : '📄';
+                console.log(`  ${icon} Using manifest.json commit date for ${folderName}`);
+                return convertToWIB(manifestResult);
             }
         }
         
-        // LOCKED or NO IMAGES: Get folder creation date
+        // LOCKED or NO MANIFEST: Get folder creation date
         const folderGitCommand = `git log --reverse --format=%aI -- "${folderName}" | head -1`;
         const folderResult = execSync(folderGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
         
@@ -258,7 +275,7 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     
     sortedChapterNames.forEach(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
-        const totalPages = folderExists ? countImagesInFolder(chapterName) : 0;
+        const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
         
         const isInLockedList = config.lockedChapters.includes(chapterName);
         const isLocked = isInLockedList && totalPages === 0;
@@ -311,7 +328,7 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     // AUTO-CLEANUP: Remove uploaded chapters from lockedChapters
     const updatedLockedChapters = config.lockedChapters.filter(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
-        const totalPages = folderExists ? countImagesInFolder(chapterName) : 0;
+        const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
         return totalPages === 0;
     });
     
@@ -358,6 +375,9 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
 
 function commandGenerate() {
     console.log('📚 Generating manga.json...\n');
+    
+    // Ensure pending files exist first
+    ensurePendingFilesExist();
     
     const config = loadConfig();
     const oldMangaData = loadJSON('manga.json');
@@ -442,6 +462,41 @@ function commandGenerate() {
 // COMMAND 2: SYNC CHAPTERS
 // ============================================
 
+function ensurePendingFilesExist() {
+    console.log('🔍 Checking pending files...\n');
+    
+    let created = false;
+    
+    // Check and create pending-views.json
+    if (!fs.existsSync('pending-views.json')) {
+        console.log('📄 Creating pending-views.json...');
+        const initialPendingViews = {
+            pendingViews: 0,
+            lastIncrement: getWIBTimestamp(),
+            lastUpdate: getWIBTimestamp()
+        };
+        saveJSON('pending-views.json', initialPendingViews);
+        created = true;
+    }
+    
+    // Check and create pending-chapter-views.json
+    if (!fs.existsSync('pending-chapter-views.json')) {
+        console.log('📄 Creating pending-chapter-views.json...');
+        const initialPendingChapters = {
+            chapters: {},
+            lastUpdated: getWIBTimestamp()
+        };
+        saveJSON('pending-chapter-views.json', initialPendingChapters);
+        created = true;
+    }
+    
+    if (created) {
+        console.log('✅ Initial pending files created!\n');
+    } else {
+        console.log('✅ All pending files exist\n');
+    }
+}
+
 function commandSync() {
     console.log('🔄 Starting chapter sync...\n');
     
@@ -479,11 +534,11 @@ function commandSync() {
                 lastIncrement: getWIBTimestamp(),
                 lastUpdate: getWIBTimestamp()
             };
-            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✓';
+            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✔';
             console.log(`  ${icon} Added new chapter: ${chapterKey}`);
             addedCount++;
         } else {
-            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✓';
+            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✔';
             console.log(`  ${icon} Chapter ${chapterKey} already exists`);
         }
     });
@@ -506,6 +561,9 @@ function commandSync() {
 
 function commandUpdateViews() {
     console.log('📊 Checking view counter...\n');
+    
+    // Ensure pending files exist
+    ensurePendingFilesExist();
     
     const pendingData = loadJSON('pending-views.json');
     const manga = loadJSON('manga.json');
@@ -547,6 +605,9 @@ function commandUpdateViews() {
 
 function commandUpdateChapterViews() {
     console.log('📖 Checking chapter views counter...\n');
+    
+    // Ensure pending files exist
+    ensurePendingFilesExist();
     
     const pendingData = loadJSON('pending-chapter-views.json');
     const manga = loadJSON('manga.json');
@@ -627,9 +688,9 @@ function main() {
     const command = process.argv[2];
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║   MANGA AUTOMATION SCRIPT v4.1 WIB   ║');
+    console.log('║   MANGA AUTOMATION SCRIPT v5.0 WIB   ║');
     console.log('║  ✅ WIB Timezone (GMT+7)             ║');
-    console.log('║  ✅ Fixed lastChapterUpdate          ║');
+    console.log('║  ✅ Manifest-based Detection         ║');
     console.log('║  🎯 Oneshot Support                  ║');
     console.log('╚═══════════════════════════════════════╝\n');
     

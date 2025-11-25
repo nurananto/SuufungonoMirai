@@ -83,10 +83,14 @@ jobs:
           git config --local user.name "github-actions[bot]"
           
           git add manga-config.json
+          # ✅ Remove [skip ci] to trigger manga-automation
           git commit -m "🤖 Auto-sync cover from website"
           git push
           
           echo "🎉 Cover synced successfully!"
+          echo ""
+          echo "ℹ️  manga-automation.yml will run automatically"
+          echo "   (15 second delay to ensure sync completes first)"
       
       - name: ✅ Complete
         run: |
@@ -95,4 +99,3 @@ jobs:
           else
             echo "ℹ️ Cover URL unchanged (already synced)"
           fi
-          echo "🔄 manga-automation.yml will trigger automatically"

@@ -1,0 +1,53 @@
+name: Encrypt New Manifest
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/manifest.json'
+  
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  encrypt-manifest:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: 🔐 Detect and Encrypt NEW manifests only
+        env:
+          SECRET_TOKEN: ${{ secrets.MANIFEST_SECRET_TOKEN }}
+          FORCE_SCAN_ALL: 'false'  # Only encrypt NEW manifests
+        run: node encrypt-manifest.js
+      
+      - name: 💾 Commit encrypted manifests
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "✅ No new manifests to encrypt"
+          else
+            git add '**/manifest.json'
+            # ✅ [skip ci] prevents triggering manga-automation immediately
+            # manga-automation will auto-trigger after 15s delay anyway
+            git commit -m "🔐 Encrypt new manifest"
+            git push origin main
+            
+            echo ""
+            echo "ℹ️  manga-automation.yml will run automatically"
+            echo "   (15 second delay to ensure encryption completes first)"
+          fi
