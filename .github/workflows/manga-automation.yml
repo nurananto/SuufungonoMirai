@@ -1,4 +1,4 @@
-name: 🔄 Manga Automation
+name: 📄 Manga Automation
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
       - name: 📚 Generate manga.json
         run: node manga-automation.js generate
 
-      - name: 📄 Sync chapters
+      - name: 🔄 Sync chapters
         run: node manga-automation.js sync
 
       - name: 📊 Update manga views
@@ -113,24 +113,26 @@ jobs:
             fi
           done
 
-      - name: 🔄 Check structural changes
+      - name: 📄 Check structural changes
         id: structural_check
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           # Check apakah manga.json baru pertama kali dibuat
-          if git diff HEAD~1 HEAD --name-status | grep -q "^A.*manga\.json$"; then
+          if git diff HEAD~1 HEAD --name-status 2>/dev/null | grep -q "^A.*manga\.json$"; then
             echo "has_structural_changes=true" >> $GITHUB_OUTPUT
             echo "🎉 First-time generation detected! (manga.json created)"
             echo "is_first_time=true" >> $GITHUB_OUTPUT
-          # Check chapters & config (BUKAN views)
-          elif git diff HEAD~1 HEAD --name-only | grep -E '(manifest\.json|manga-config\.json|chapters/)'; then
-            echo "has_structural_changes=true" >> $GITHUB_OUTPUT
-            echo "✅ Structural changes detected (new chapter/config)"
-            echo "is_first_time=false" >> $GITHUB_OUTPUT
           else
-            echo "has_structural_changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No structural changes (only views updated)"
-            echo "is_first_time=false" >> $GITHUB_OUTPUT
+            # Check chapters & config (BUKAN views) - dengan error handling
+            if git diff HEAD~1 HEAD --name-only 2>/dev/null | grep -qE '(manifest\.json|manga-config\.json|chapters/)'; then
+              echo "has_structural_changes=true" >> $GITHUB_OUTPUT
+              echo "✅ Structural changes detected (new chapter/config)"
+              echo "is_first_time=false" >> $GITHUB_OUTPUT
+            else
+              echo "has_structural_changes=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ No structural changes (only views updated)"
+              echo "is_first_time=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: 🚀 Trigger website rebuild
@@ -164,7 +166,7 @@ jobs:
           steps.check_changes.outputs.has_changes != 'true' ||
           steps.structural_check.outputs.has_structural_changes != 'true'
         run: |
-          echo "⏭️ Skipping website trigger"
+          echo "⭐️ Skipping website trigger"
           echo "✅ Website will only be triggered for:"
           echo "   - First-time manga.json creation (setup)"
           echo "   - New chapters (manifest.json)"
