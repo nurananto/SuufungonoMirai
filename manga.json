@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "Ongoing",
-    "views": 74,
+    "views": 96,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -36,7 +36,7 @@
       "totalPages": 44,
       "pages": 44,
       "locked": false,
-      "views": 10
+      "views": 11
     },
     "2": {
       "title": "Chapter 2",
@@ -46,7 +46,7 @@
       "totalPages": 30,
       "pages": 30,
       "locked": false,
-      "views": 2
+      "views": 3
     },
     "3": {
       "title": "Chapter 3",
@@ -186,7 +186,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 2
+      "views": 3
     },
     "10.2": {
       "title": "Chapter 10.2",
@@ -196,7 +196,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 1
+      "views": 2
     },
     "11.1": {
       "title": "Chapter 11.1",
@@ -206,7 +206,7 @@
       "totalPages": 18,
       "pages": 18,
       "locked": false,
-      "views": 2
+      "views": 4
     },
     "11.2": {
       "title": "Chapter 11.2",
@@ -216,7 +216,7 @@
       "totalPages": 12,
       "pages": 12,
       "locked": false,
-      "views": 2
+      "views": 4
     },
     "12.1": {
       "title": "Chapter 12.1",
@@ -226,7 +226,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 3
+      "views": 6
     },
     "12.2": {
       "title": "Chapter 12.2",
@@ -236,7 +236,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 7
+      "views": 11
     },
     "13.1": {
       "title": "Chapter 13.1",
@@ -246,7 +246,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 33
+      "views": 40
     },
     "13.2": {
       "title": "Chapter 13.2",
@@ -256,9 +256,9 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 49
+      "views": 60
     }
   },
-  "lastUpdated": "2025-11-27T00:23:41+07:00",
+  "lastUpdated": "2025-11-28T00:21:48+07:00",
   "lastChapterUpdate": "2025-11-25T19:44:41+07:00"
 }
