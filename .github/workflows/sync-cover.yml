@@ -38,7 +38,7 @@ jobs:
           curl -s "$WEBSITE_CONFIG_URL" -o /tmp/website-config.js
           
           if [ ! -f /tmp/website-config.js ]; then
-            echo "[ERROR] Failed to download manga-config.js"
+            echo "[FAILED] Failed to download manga-config.js"
             exit 1
           fi
           
@@ -55,7 +55,7 @@ jobs:
               vm.runInContext(content, sandbox);
               
               if (!sandbox.MANGA_LIST) {
-                console.error('[ERROR] MANGA_LIST not found');
+                console.error('[FAILED] MANGA_LIST not found');
                 process.exit(1);
               }
               
@@ -64,11 +64,11 @@ jobs:
               if (manga && manga.cover) {
                 console.log(manga.cover);
               } else {
-                console.error('[ERROR] Cover not found for repo: ${REPO_NAME}');
+                console.error('[FAILED] Cover not found for repo: ${REPO_NAME}');
                 process.exit(1);
               }
             } catch (error) {
-              console.error('[ERROR] Parse config:', error.message);
+              console.error('[FAILED] Parse config:', error.message);
               process.exit(1);
             }
           ")
@@ -112,7 +112,7 @@ jobs:
                   console.log('[INFO] manga-config.json cover URL unchanged');
                 }
               } catch (error) {
-                console.error('[ERROR] Updating manga-config.json:', error.message);
+                console.error('[FAILED] Updating manga-config.json:', error.message);
                 process.exit(1);
               }
             "
@@ -150,7 +150,7 @@ jobs:
                   console.log('[WARN] manga.json does not have manga object');
                 }
               } catch (error) {
-                console.error('[ERROR] Updating manga.json:', error.message);
+                console.error('[FAILED] Updating manga.json:', error.message);
                 process.exit(1);
               }
             "
