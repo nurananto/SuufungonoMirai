@@ -1,4 +1,4 @@
-name: Sync Cover from Website
+name: Sync Cover from Website (R2)
 
 on:
   repository_dispatch:
@@ -23,57 +23,151 @@ jobs:
         with:
           node-version: '18'
       
-      - name: 📥 Sync Cover URL
+      - name: 📥 Sync Cover URL from R2
         run: |
-          echo "🔍 Fetching latest cover info from website..."
+          echo "[INFO] Fetching latest cover info from website..."
           
           # Get repo name from GitHub context
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          echo "[REPO] Current repo: $REPO_NAME"
           
-          # Fetch manga-config.js from website
-          WEBSITE_CONFIG_URL="https://raw.githubusercontent.com/nurananto/NuranantoScanlation/main/manga-config.js"
+          # Fetch manga-config.js from main website repo
+          WEBSITE_CONFIG_URL="https://raw.githubusercontent.com/nurananto/nuranantoscans/main/manga-config.js"
+          
+          echo "[FETCH] Downloading manga-config.js..."
           curl -s "$WEBSITE_CONFIG_URL" -o /tmp/website-config.js
           
-          # Extract cover URL for this repo
+          if [ ! -f /tmp/website-config.js ]; then
+            echo "[ERROR] Failed to download manga-config.js"
+            exit 1
+          fi
+          
+          # Extract R2 cover URL for this repo
+          echo "[EXTRACT] Extracting cover URL for $REPO_NAME..."
           COVER_URL=$(node -e "
             const fs = require('fs');
             const content = fs.readFileSync('/tmp/website-config.js', 'utf-8');
             const vm = require('vm');
-            const sandbox = { MANGA_LIST: null };
+            const sandbox = { MANGA_LIST: null, MANGA_REPOS: null };
             vm.createContext(sandbox);
-            vm.runInContext(content, sandbox);
-            const manga = sandbox.MANGA_LIST.find(m => m.repo === '${REPO_NAME}');
-            if (manga && manga.cover) {
-              const fullUrl = 'https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/' + manga.cover;
-              console.log(fullUrl);
+            
+            try {
+              vm.runInContext(content, sandbox);
+              
+              if (!sandbox.MANGA_LIST) {
+                console.error('[ERROR] MANGA_LIST not found');
+                process.exit(1);
+              }
+              
+              const manga = sandbox.MANGA_LIST.find(m => m.repo === '${REPO_NAME}');
+              
+              if (manga && manga.cover) {
+                console.log(manga.cover);
+              } else {
+                console.error('[ERROR] Cover not found for repo: ${REPO_NAME}');
+                process.exit(1);
+              }
+            } catch (error) {
+              console.error('[ERROR] Parse config:', error.message);
+              process.exit(1);
             }
           ")
           
           if [ -z "$COVER_URL" ]; then
-            echo "⚠️ No cover URL found for this repo"
+            echo "[WARN] No cover URL found for this repo"
             exit 0
           fi
           
-          echo "✅ Found cover: $COVER_URL"
+          echo "[SUCCESS] Found cover URL: $COVER_URL"
+          
+          # Validate it's an R2 URL
+          if [[ "$COVER_URL" == *"r2.cloudflarestorage.com"* ]] || [[ "$COVER_URL" == *".r2.dev"* ]] || [[ "$COVER_URL" == *"cdn.nuranantoscans.my.id"* ]]; then
+            echo "[VALID] R2 URL detected"
+          else
+            echo "[WARN] URL is not from R2, but will proceed"
+          fi
           
           # Update manga-config.json
           if [ -f manga-config.json ]; then
+            echo "[UPDATE] Updating manga-config.json..."
+            
+            # Backup original
+            cp manga-config.json manga-config.json.backup
+            
             node -e "
               const fs = require('fs');
-              const config = JSON.parse(fs.readFileSync('manga-config.json', 'utf-8'));
-              config.cover = '${COVER_URL}';
-              fs.writeFileSync('manga-config.json', JSON.stringify(config, null, 2));
+              
+              try {
+                const config = JSON.parse(fs.readFileSync('manga-config.json', 'utf-8'));
+                const oldCover = config.cover;
+                config.cover = '${COVER_URL}';
+                
+                fs.writeFileSync('manga-config.json', JSON.stringify(config, null, 2));
+                
+                if (oldCover !== config.cover) {
+                  console.log('[SUCCESS] manga-config.json cover URL updated');
+                  console.log('  Old:', oldCover);
+                  console.log('  New:', config.cover);
+                } else {
+                  console.log('[INFO] manga-config.json cover URL unchanged');
+                }
+              } catch (error) {
+                console.error('[ERROR] Updating manga-config.json:', error.message);
+                process.exit(1);
+              }
             "
-            echo "✅ Updated manga-config.json"
+          else
+            echo "[WARN] manga-config.json not found in this repo"
+          fi
+          
+          # Update manga.json (inside manga object)
+          if [ -f manga.json ]; then
+            echo "[UPDATE] Updating manga.json..."
+            
+            # Backup original
+            cp manga.json manga.json.backup
+            
+            node -e "
+              const fs = require('fs');
+              
+              try {
+                const data = JSON.parse(fs.readFileSync('manga.json', 'utf-8'));
+                
+                if (data.manga) {
+                  const oldCover = data.manga.cover;
+                  data.manga.cover = '${COVER_URL}';
+                  
+                  fs.writeFileSync('manga.json', JSON.stringify(data, null, 2));
+                  
+                  if (oldCover !== data.manga.cover) {
+                    console.log('[SUCCESS] manga.json cover URL updated');
+                    console.log('  Old:', oldCover);
+                    console.log('  New:', data.manga.cover);
+                  } else {
+                    console.log('[INFO] manga.json cover URL unchanged');
+                  }
+                } else {
+                  console.log('[WARN] manga.json does not have manga object');
+                }
+              } catch (error) {
+                console.error('[ERROR] Updating manga.json:', error.message);
+                process.exit(1);
+              }
+            "
+          else
+            echo "[WARN] manga.json not found in this repo"
           fi
       
-      - name: 🔍 Check for Changes
+      - name: 📝 Check for Changes
         id: check_changes
         run: |
-          if [[ -n $(git status -s manga-config.json) ]]; then
+          if [[ -n $(git status -s) ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "[SUCCESS] Changes detected"
+            git status -s
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "[INFO] No changes detected"
           fi
       
       - name: 💾 Commit and Push
@@ -82,20 +176,33 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          git add manga-config.json
-          # ✅ Remove [skip ci] to trigger manga-automation
-          git commit -m "🤖 Auto-sync cover from website"
+          git add manga-config.json manga.json
+          
+          # Commit tanpa [skip ci] agar trigger manga-automation workflow
+          COMMIT_MSG="🤖 Auto-sync cover from R2 - $(date +'%Y-%m-%d %H:%M')"
+          git commit -m "$COMMIT_MSG"
+          
           git push
           
-          echo "🎉 Cover synced successfully!"
           echo ""
-          echo "ℹ️  manga-automation.yml will run automatically"
-          echo "   (15 second delay to ensure sync completes first)"
+          echo "[COMPLETE] Cover synced successfully!"
+          echo ""
+          echo "[INFO] manga-automation.yml will run automatically"
+          echo "      (triggered by this commit)"
       
       - name: ✅ Complete
         run: |
           if [[ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]]; then
-            echo "✅ Cover URL updated"
+            echo "[SUCCESS] Cover URL updated successfully"
+            echo "[INFO] New cover is now hosted on Cloudflare R2"
+            echo "      - manga-config.json: Updated"
+            echo "      - manga.json: Updated"
           else
-            echo "ℹ️ Cover URL unchanged (already synced)"
+            echo "[INFO] Cover URL unchanged (already up-to-date)"
+            echo "[INFO] No action needed"
           fi
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/website-config.js manga-config.json.backup manga.json.backup
