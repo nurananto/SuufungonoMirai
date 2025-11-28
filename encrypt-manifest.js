@@ -1,7 +1,8 @@
 /**
- * ENCRYPT-MANIFEST.JS
+ * ENCRYPT-MANIFEST.JS - IMPROVED VERSION
  * 🔐 Encrypts manifest.json files with AES-256
  * 📌 Supports both normal mode (git diff) and force mode (scan all)
+ * ✅ Better detection of new manifests
  * ✅ Does NOT re-encrypt already encrypted manifests
  */
 
@@ -15,8 +16,21 @@ const { execSync } = require('child_process');
 // ============================================
 
 const ENCRYPTION_ALGORITHM = 'aes-256-cbc';
-const SECRET_TOKEN = process.env.SECRET_TOKEN || 'XfXqB1d0ud6rZCVPqzpzKxowGVpZ0GBU';
+const SECRET_TOKEN = process.env.SECRET_TOKEN;
 const FORCE_SCAN_ALL = process.env.FORCE_SCAN_ALL === 'true';
+
+// ✅ SECURITY: Token must be provided via environment variable
+if (!SECRET_TOKEN) {
+    console.error('╔═══════════════════════════════════════╗');
+    console.error('║  ❌ SECURITY ERROR                    ║');
+    console.error('╚═══════════════════════════════════════╝\n');
+    console.error('SECRET_TOKEN environment variable is required!');
+    console.error('\nPlease set MANIFEST_SECRET_TOKEN in GitHub Secrets:');
+    console.error('  Repository → Settings → Secrets → Actions');
+    console.error('\nTo generate a secure token:');
+    console.error('  node -e "console.log(require(\'crypto\').randomBytes(16).toString(\'hex\'))"');
+    process.exit(1);
+}
 
 // Derive key from token (32 bytes for AES-256)
 function deriveKey(token) {
@@ -44,130 +58,165 @@ function isEncrypted(text) {
 }
 
 // ============================================
-// GIT DETECTION
+// IMPROVED: GIT DETECTION
 // ============================================
+
+function getAllManifestsInRepo() {
+    try {
+        const output = execSync('find . -name "manifest.json" -not -path "./.git/*"', {
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+        }).trim();
+        
+        if (output) {
+            const allManifests = output.split('\n')
+                .map(path => path.replace('./', ''))
+                .filter(path => fs.existsSync(path));
+            
+            return allManifests;
+        }
+    } catch (error) {
+        console.error('❌ Error finding manifests:', error.message);
+    }
+    return [];
+}
 
 function getModifiedManifests() {
     try {
         // 🔥 FORCE MODE: Skip git diff, scan ALL manifests
         if (FORCE_SCAN_ALL) {
             console.log('🔥 Force mode enabled - will scan ALL manifests\n');
-            
-            try {
-                const output = execSync('find . -name "manifest.json" -not -path "./.git/*"', {
-                    encoding: 'utf-8',
-                    stdio: ['pipe', 'pipe', 'pipe']
-                }).trim();
-                
-                if (output) {
-                    const allManifests = output.split('\n')
-                        .map(path => path.replace('./', ''))
-                        .filter(path => fs.existsSync(path));
-                    
-                    console.log(`📋 Found ${allManifests.length} total manifest(s) in repo`);
-                    console.log('📝 Manifests found:');
-                    allManifests.forEach(file => console.log(`   - ${file}`));
-                    
-                    return allManifests;
-                }
-            } catch (findError) {
-                console.error('❌ Force scan failed:', findError.message);
-                return [];
-            }
+            const allManifests = getAllManifestsInRepo();
+            console.log(`📋 Found ${allManifests.length} total manifest(s) in repo`);
+            console.log('📝 Manifests found:');
+            allManifests.forEach(file => console.log(`   - ${file}`));
+            return allManifests;
         }
         
-        // Normal mode: use git diff
-        let output = '';
+        // ============================================
+        // IMPROVED: Better git diff detection
+        // ============================================
         
-        // Try to get changed files between last 2 commits
+        let manifestFiles = [];
+        
+        // Strategy 1: Check last commit for manifest changes
         try {
-            output = execSync('git diff --name-only HEAD~1 HEAD', { 
+            const lastCommitFiles = execSync('git diff --name-only HEAD~1 HEAD', { 
                 encoding: 'utf-8',
                 stdio: ['pipe', 'pipe', 'pipe']
             }).trim();
-        } catch (diffError) {
-            // If diff fails (e.g., first commit), get all manifest files
-            console.log('ℹ️  Could not diff commits, checking all manifests...');
             
+            if (lastCommitFiles) {
+                const changedFiles = lastCommitFiles.split('\n');
+                console.log(`📋 Changed files in last commit: ${changedFiles.length}`);
+                console.log('📝 Files changed:');
+                changedFiles.forEach(file => console.log(`   - ${file}`));
+                
+                manifestFiles = changedFiles.filter(file => {
+                    return file.endsWith('manifest.json') && 
+                           !file.startsWith('.') && 
+                           fs.existsSync(file);
+                });
+                
+                console.log(`📄 Manifest files in last commit: ${manifestFiles.length}`);
+            }
+        } catch (diffError) {
+            console.log('ℹ️  Could not diff last commit (might be first commit)');
+        }
+        
+        // Strategy 2: If no manifests found, check unstaged changes
+        if (manifestFiles.length === 0) {
             try {
-                output = execSync('find . -name "manifest.json" -not -path "./.git/*"', {
+                const unstagedFiles = execSync('git diff --name-only', {
                     encoding: 'utf-8',
                     stdio: ['pipe', 'pipe', 'pipe']
                 }).trim();
                 
-                // Convert find output to array and clean paths
-                if (output) {
-                    const allManifests = output.split('\n')
-                        .map(path => path.replace('./', ''))
-                        .filter(path => fs.existsSync(path));
+                if (unstagedFiles) {
+                    const files = unstagedFiles.split('\n');
+                    const unstagedManifests = files.filter(file => {
+                        return file.endsWith('manifest.json') && 
+                               !file.startsWith('.') && 
+                               fs.existsSync(file);
+                    });
                     
-                    console.log(`📋 Found ${allManifests.length} total manifest(s)`);
-                    console.log(`📄 Manifest files detected: ${allManifests.length}`);
-                    
-                    return allManifests;
+                    if (unstagedManifests.length > 0) {
+                        console.log(`📝 Found ${unstagedManifests.length} unstaged manifest(s)`);
+                        manifestFiles = [...manifestFiles, ...unstagedManifests];
+                    }
                 }
-            } catch (findError) {
-                console.warn('⚠️  Could not find manifests:', findError.message);
+            } catch (error) {
+                // Silent fail
             }
         }
         
-        if (!output) {
-            console.log('ℹ️  No changes detected');
-            return [];
+        // Strategy 3: Check for newly added (untracked) manifests
+        try {
+            const untrackedFiles = execSync('git ls-files --others --exclude-standard', {
+                encoding: 'utf-8',
+                stdio: ['pipe', 'pipe', 'pipe']
+            }).trim();
+            
+            if (untrackedFiles) {
+                const files = untrackedFiles.split('\n');
+                const untrackedManifests = files.filter(file => {
+                    return file.endsWith('manifest.json') && 
+                           !file.startsWith('.') && 
+                           fs.existsSync(file);
+                });
+                
+                if (untrackedManifests.length > 0) {
+                    console.log(`📝 Found ${untrackedManifests.length} untracked manifest(s)`);
+                    manifestFiles = [...manifestFiles, ...untrackedManifests];
+                }
+            }
+        } catch (error) {
+            // Silent fail
         }
         
-        const changedFiles = output.split('\n');
+        // Remove duplicates
+        manifestFiles = [...new Set(manifestFiles)];
         
-        // DEBUG: Log semua file yang berubah
-        console.log(`📋 Changed files: ${changedFiles.length}`);
-        console.log('📝 Files changed:');
-        changedFiles.forEach(file => console.log(`   - ${file}`));
-        
-        // Filter only manifest.json files
-        const manifestFiles = changedFiles.filter(file => {
-            const endsWithManifest = file.endsWith('manifest.json');
-            const notHidden = !file.startsWith('.');
-            const exists = fs.existsSync(file);
+        // Strategy 4: If still no manifests, check all manifests for unencrypted ones
+        if (manifestFiles.length === 0) {
+            console.log('ℹ️  No manifest changes detected via git');
+            console.log('🔍 Checking all manifests for unencrypted ones...');
             
-            // DEBUG: Log filter results
-            if (file.includes('manifest')) {
-                console.log(`   🔍 ${file}:`);
-                console.log(`      - Ends with manifest.json: ${endsWithManifest}`);
-                console.log(`      - Not hidden: ${notHidden}`);
-                console.log(`      - Exists: ${exists}`);
+            const allManifests = getAllManifestsInRepo();
+            const unencryptedManifests = [];
+            
+            for (const manifestPath of allManifests) {
+                try {
+                    const content = fs.readFileSync(manifestPath, 'utf8');
+                    const manifest = JSON.parse(content);
+                    
+                    if (manifest.pages && manifest.pages.length > 0) {
+                        const firstPage = manifest.pages[0];
+                        if (!isEncrypted(firstPage)) {
+                            unencryptedManifests.push(manifestPath);
+                            console.log(`   ⚠️  Found unencrypted: ${manifestPath}`);
+                        }
+                    }
+                } catch (error) {
+                    // Skip invalid manifests
+                }
             }
             
-            return endsWithManifest && notHidden && exists;
-        });
+            if (unencryptedManifests.length > 0) {
+                console.log(`\n🔍 Found ${unencryptedManifests.length} unencrypted manifest(s)!`);
+                return unencryptedManifests;
+            }
+        }
         
-        console.log(`📄 Manifest files detected: ${manifestFiles.length}`);
-        
+        console.log(`\n📄 Total manifest files to process: ${manifestFiles.length}`);
         return manifestFiles;
         
     } catch (error) {
-        console.warn('⚠️  Could not detect git changes:', error.message);
-        console.log('ℹ️  Trying to find all manifests as fallback...');
+        console.warn('⚠️  Error detecting changes:', error.message);
+        console.log('ℹ️  Falling back to scan all manifests...');
         
         // Fallback: scan all manifest.json files
-        try {
-            const output = execSync('find . -name "manifest.json" -not -path "./.git/*"', {
-                encoding: 'utf-8',
-                stdio: ['pipe', 'pipe', 'pipe']
-            }).trim();
-            
-            if (output) {
-                const allManifests = output.split('\n')
-                    .map(path => path.replace('./', ''))
-                    .filter(path => fs.existsSync(path));
-                
-                console.log(`📋 Found ${allManifests.length} manifest(s) as fallback`);
-                return allManifests;
-            }
-        } catch (findError) {
-            console.error('❌ Fallback failed:', findError.message);
-        }
-        
-        return [];
+        return getAllManifestsInRepo();
     }
 }
 
@@ -225,10 +274,10 @@ function encryptManifest(filePath, secretKey) {
 // ============================================
 
 function main() {
-    const modeText = FORCE_SCAN_ALL ? '🔥 FORCE MODE: Scan ALL manifests' : '🔐 Encrypts NEW manifests only';
+    const modeText = FORCE_SCAN_ALL ? '🔥 FORCE MODE: Scan ALL manifests' : '🔍 Smart detection mode';
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║     MANIFEST ENCRYPTION SCRIPT        ║');
+    console.log('║     MANIFEST ENCRYPTION SCRIPT v2.0   ║');
     console.log(`║   ${modeText.padEnd(37)} ║`);
     console.log('╚═══════════════════════════════════════╝\n');
     

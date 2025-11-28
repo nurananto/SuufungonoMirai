@@ -2,6 +2,8 @@ name: 📄 Manga Automation
 
 on:
   push:
+    branches:
+      - main
     paths:
       - '**/manifest.json'
       - 'manga-config.json'
@@ -23,11 +25,12 @@ jobs:
       # 🕐 CRITICAL: WAIT FOR OTHER WORKFLOWS
       # ========================================
       - name: ⏳ Wait for other workflows to complete
+        if: github.event_name == 'push'
         run: |
-          echo "⏳ Waiting 15 seconds for other workflows..."
+          echo "⏳ Waiting 20 seconds for other workflows..."
           echo "   - encrypt-manifest.yml (if running)"
           echo "   - sync-cover.yml (if running)"
-          sleep 15
+          sleep 20
           echo "✅ Wait complete, starting manga automation..."
 
       - name: 📥 Checkout repository
@@ -113,7 +116,7 @@ jobs:
             fi
           done
 
-      - name: 📄 Check structural changes
+      - name: 🔄 Check structural changes
         id: structural_check
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
