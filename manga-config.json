@@ -1,4 +1,5 @@
 {
+  "type": "manga",
   "title": "Suufungo no Mirai ga Wakaru You ni Natta kedo, Onnagokoro wa Wakaranai.",
   "alternativeTitle": "数分後の未来が分かるようになったけど、女心は分からない。",
   "cover": "https://cdn.nuranantoscans.my.id/covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.webp",
@@ -15,7 +16,8 @@
     "School Life",
     "Slice of Life"
   ],
-  "status": "Ongoing",
+  "status": "ONGOING",
+  "endChapter": null,
   "views": 0,
   "links": {
     "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",

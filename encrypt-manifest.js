@@ -1,9 +1,8 @@
 /**
- * ENCRYPT-MANIFEST.JS - IMPROVED VERSION
+ * ENCRYPT-MANIFEST.JS - IMPROVED DETECTION VERSION
  * 🔐 Encrypts manifest.json files with AES-256
- * 📌 Supports both normal mode (git diff) and force mode (scan all)
- * ✅ Better detection of new manifests
- * ✅ Does NOT re-encrypt already encrypted manifests
+ * ✅ Better detection: checks UNENCRYPTED manifests first
+ * ✅ Fallback to git diff if needed
  */
 
 const fs = require('fs');
@@ -58,7 +57,7 @@ function isEncrypted(text) {
 }
 
 // ============================================
-// IMPROVED: GIT DETECTION
+// IMPROVED: GET ALL MANIFESTS
 // ============================================
 
 function getAllManifestsInRepo() {
@@ -81,25 +80,45 @@ function getAllManifestsInRepo() {
     return [];
 }
 
-function getModifiedManifests() {
-    try {
-        // 🔥 FORCE MODE: Skip git diff, scan ALL manifests
-        if (FORCE_SCAN_ALL) {
-            console.log('🔥 Force mode enabled - will scan ALL manifests\n');
-            const allManifests = getAllManifestsInRepo();
-            console.log(`📋 Found ${allManifests.length} total manifest(s) in repo`);
-            console.log('📝 Manifests found:');
-            allManifests.forEach(file => console.log(`   - ${file}`));
-            return allManifests;
+// ============================================
+// 🔥 NEW: PRIORITY CHECK UNENCRYPTED MANIFESTS
+// ============================================
+
+function getUnencryptedManifests() {
+    const allManifests = getAllManifestsInRepo();
+    const unencryptedManifests = [];
+    
+    console.log(`📋 Scanning ${allManifests.length} total manifest(s)...`);
+    
+    for (const manifestPath of allManifests) {
+        try {
+            const content = fs.readFileSync(manifestPath, 'utf8');
+            const manifest = JSON.parse(content);
+            
+            if (manifest.pages && manifest.pages.length > 0) {
+                const firstPage = manifest.pages[0];
+                if (!isEncrypted(firstPage)) {
+                    unencryptedManifests.push(manifestPath);
+                    console.log(`   🔓 Unencrypted: ${manifestPath}`);
+                }
+            }
+        } catch (error) {
+            console.warn(`   ⚠️  Invalid manifest: ${manifestPath}`);
         }
-        
-        // ============================================
-        // IMPROVED: Better git diff detection
-        // ============================================
-        
+    }
+    
+    return unencryptedManifests;
+}
+
+// ============================================
+// IMPROVED: GIT DETECTION (FALLBACK)
+// ============================================
+
+function getModifiedManifestsFromGit() {
+    try {
         let manifestFiles = [];
         
-        // Strategy 1: Check last commit for manifest changes
+        // Strategy 1: Check last commit
         try {
             const lastCommitFiles = execSync('git diff --name-only HEAD~1 HEAD', { 
                 encoding: 'utf-8',
@@ -109,8 +128,6 @@ function getModifiedManifests() {
             if (lastCommitFiles) {
                 const changedFiles = lastCommitFiles.split('\n');
                 console.log(`📋 Changed files in last commit: ${changedFiles.length}`);
-                console.log('📝 Files changed:');
-                changedFiles.forEach(file => console.log(`   - ${file}`));
                 
                 manifestFiles = changedFiles.filter(file => {
                     return file.endsWith('manifest.json') && 
@@ -118,13 +135,16 @@ function getModifiedManifests() {
                            fs.existsSync(file);
                 });
                 
-                console.log(`📄 Manifest files in last commit: ${manifestFiles.length}`);
+                if (manifestFiles.length > 0) {
+                    console.log(`📝 Manifest files in last commit: ${manifestFiles.length}`);
+                    manifestFiles.forEach(f => console.log(`   - ${f}`));
+                }
             }
         } catch (diffError) {
             console.log('ℹ️  Could not diff last commit (might be first commit)');
         }
         
-        // Strategy 2: If no manifests found, check unstaged changes
+        // Strategy 2: Check unstaged changes
         if (manifestFiles.length === 0) {
             try {
                 const unstagedFiles = execSync('git diff --name-only', {
@@ -150,7 +170,7 @@ function getModifiedManifests() {
             }
         }
         
-        // Strategy 3: Check for newly added (untracked) manifests
+        // Strategy 3: Check untracked files
         try {
             const untrackedFiles = execSync('git ls-files --others --exclude-standard', {
                 encoding: 'utf-8',
@@ -175,49 +195,55 @@ function getModifiedManifests() {
         }
         
         // Remove duplicates
-        manifestFiles = [...new Set(manifestFiles)];
-        
-        // Strategy 4: If still no manifests, check all manifests for unencrypted ones
-        if (manifestFiles.length === 0) {
-            console.log('ℹ️  No manifest changes detected via git');
-            console.log('🔍 Checking all manifests for unencrypted ones...');
-            
-            const allManifests = getAllManifestsInRepo();
-            const unencryptedManifests = [];
-            
-            for (const manifestPath of allManifests) {
-                try {
-                    const content = fs.readFileSync(manifestPath, 'utf8');
-                    const manifest = JSON.parse(content);
-                    
-                    if (manifest.pages && manifest.pages.length > 0) {
-                        const firstPage = manifest.pages[0];
-                        if (!isEncrypted(firstPage)) {
-                            unencryptedManifests.push(manifestPath);
-                            console.log(`   ⚠️  Found unencrypted: ${manifestPath}`);
-                        }
-                    }
-                } catch (error) {
-                    // Skip invalid manifests
-                }
-            }
-            
-            if (unencryptedManifests.length > 0) {
-                console.log(`\n🔍 Found ${unencryptedManifests.length} unencrypted manifest(s)!`);
-                return unencryptedManifests;
-            }
-        }
-        
-        console.log(`\n📄 Total manifest files to process: ${manifestFiles.length}`);
-        return manifestFiles;
+        return [...new Set(manifestFiles)];
         
     } catch (error) {
-        console.warn('⚠️  Error detecting changes:', error.message);
-        console.log('ℹ️  Falling back to scan all manifests...');
-        
-        // Fallback: scan all manifest.json files
-        return getAllManifestsInRepo();
+        console.warn('⚠️  Error detecting git changes:', error.message);
+        return [];
     }
+}
+
+// ============================================
+// 🔥 NEW: SMART MANIFEST DETECTION
+// ============================================
+
+function getManifestsToEncrypt() {
+    // 🔥 FORCE MODE: Return all manifests
+    if (FORCE_SCAN_ALL) {
+        console.log('🔥 Force mode enabled - will scan ALL manifests\n');
+        const allManifests = getAllManifestsInRepo();
+        console.log(`📋 Found ${allManifests.length} total manifest(s) in repo`);
+        return allManifests;
+    }
+    
+    // ============================================
+    // PRIORITY 1: Check for unencrypted manifests first
+    // This catches newly uploaded manifests regardless of git history
+    // ============================================
+    console.log('🔍 Priority check: Looking for unencrypted manifests...\n');
+    const unencryptedManifests = getUnencryptedManifests();
+    
+    if (unencryptedManifests.length > 0) {
+        console.log(`\n✅ Found ${unencryptedManifests.length} unencrypted manifest(s)!`);
+        return unencryptedManifests;
+    }
+    
+    console.log('\n✅ All manifests are encrypted');
+    
+    // ============================================
+    // PRIORITY 2: Fallback to git detection
+    // Only if no unencrypted manifests found
+    // ============================================
+    console.log('\n🔍 Checking git for recent changes...\n');
+    const gitManifests = getModifiedManifestsFromGit();
+    
+    if (gitManifests.length > 0) {
+        console.log(`\n📝 Found ${gitManifests.length} manifest(s) from git changes`);
+        return gitManifests;
+    }
+    
+    console.log('\nℹ️  No manifest changes detected');
+    return [];
 }
 
 // ============================================
@@ -277,29 +303,29 @@ function main() {
     const modeText = FORCE_SCAN_ALL ? '🔥 FORCE MODE: Scan ALL manifests' : '🔍 Smart detection mode';
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║     MANIFEST ENCRYPTION SCRIPT v2.0   ║');
-    console.log(`║   ${modeText.padEnd(37)} ║`);
+    console.log('║   MANIFEST ENCRYPTION SCRIPT v3.0     ║');
+    console.log(`║ ${modeText.padEnd(39)}║`);
     console.log('╚═══════════════════════════════════════╝\n');
     
     // Derive encryption key
     const secretKey = deriveKey(SECRET_TOKEN);
-    console.log(`🔑 Secret token loaded (${SECRET_TOKEN.length} chars)`);
+    console.log(`🔑 Secret token loaded (${SECRET_TOKEN.length} chars)\n`);
     
-    // Detect modified manifests
-    const modifiedManifests = getModifiedManifests();
+    // Get manifests to encrypt using smart detection
+    const manifestsToProcess = getManifestsToEncrypt();
     
-    if (modifiedManifests.length === 0) {
+    if (manifestsToProcess.length === 0) {
         console.log('\n✅ No new manifests to encrypt');
         process.exit(0);
     }
     
-    console.log(`\n📋 Found ${modifiedManifests.length} manifest(s) to check:\n`);
-    modifiedManifests.forEach(file => console.log(`   - ${file}`));
+    console.log(`\n📋 Will process ${manifestsToProcess.length} manifest(s):`);
+    manifestsToProcess.forEach(file => console.log(`   - ${file}`));
     
     // Encrypt each manifest
     let encryptedCount = 0;
     
-    modifiedManifests.forEach(filePath => {
+    manifestsToProcess.forEach(filePath => {
         if (encryptManifest(filePath, secretKey)) {
             encryptedCount++;
         }
@@ -307,7 +333,7 @@ function main() {
     
     console.log(`\n╔═══════════════════════════════════════╗`);
     console.log(`║  ✅ Encryption completed!             ║`);
-    console.log(`║  📊 Encrypted: ${encryptedCount}/${modifiedManifests.length} manifest(s)           ║`);
+    console.log(`║  📊 Encrypted: ${encryptedCount}/${manifestsToProcess.length} manifest(s)${' '.repeat(11 - String(encryptedCount).length - String(manifestsToProcess.length).length)}║`);
     console.log(`╚═══════════════════════════════════════╝`);
 }
 
