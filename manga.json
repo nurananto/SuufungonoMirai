@@ -16,8 +16,8 @@
       "School Life",
       "Slice of Life"
     ],
-    "status": "Ongoing",
-    "views": 249,
+    "status": "ONGOING",
+    "views": 252,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -25,7 +25,8 @@
     "repoUrl": "https://raw.githubusercontent.com/nurananto/SuufungonoMirai/main/",
     "imagePrefix": "Image",
     "imageFormat": "webp",
-    "lockedChapters": []
+    "lockedChapters": [],
+    "type": "manga"
   },
   "chapters": {
     "1": {
@@ -36,7 +37,7 @@
       "totalPages": 44,
       "pages": 44,
       "locked": false,
-      "views": 37
+      "views": 38
     },
     "2": {
       "title": "Chapter 2",
@@ -46,7 +47,7 @@
       "totalPages": 30,
       "pages": 30,
       "locked": false,
-      "views": 18
+      "views": 19
     },
     "3": {
       "title": "Chapter 3",
@@ -206,7 +207,7 @@
       "totalPages": 18,
       "pages": 18,
       "locked": false,
-      "views": 51
+      "views": 56
     },
     "11.2": {
       "title": "Chapter 11.2",
@@ -259,6 +260,6 @@
       "views": 166
     }
   },
-  "lastUpdated": "2025-12-12T00:31:19+07:00",
+  "lastUpdated": "2025-12-12T14:03:49+07:00",
   "lastChapterUpdate": "2025-11-25T19:44:41+07:00"
 }
