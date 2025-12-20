@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "ONGOING",
-    "views": 540,
+    "views": 571,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -37,7 +37,7 @@
       "totalPages": 44,
       "pages": 44,
       "locked": false,
-      "views": 60
+      "views": 62
     },
     "2": {
       "title": "Chapter 2",
@@ -137,7 +137,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 20
+      "views": 22
     },
     "8.1": {
       "title": "Chapter 8.1",
@@ -147,7 +147,7 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 20
+      "views": 24
     },
     "8.2": {
       "title": "Chapter 8.2",
@@ -157,7 +157,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 23
+      "views": 24
     },
     "9.1": {
       "title": "Chapter 9.1",
@@ -167,7 +167,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 25
+      "views": 27
     },
     "9.2": {
       "title": "Chapter 9.2",
@@ -177,7 +177,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 22
+      "views": 24
     },
     "10.1": {
       "title": "Chapter 10.1",
@@ -187,7 +187,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 26
+      "views": 27
     },
     "10.2": {
       "title": "Chapter 10.2",
@@ -197,7 +197,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 38
+      "views": 40
     },
     "11.1": {
       "title": "Chapter 11.1",
@@ -207,7 +207,7 @@
       "totalPages": 18,
       "pages": 18,
       "locked": false,
-      "views": 119
+      "views": 132
     },
     "11.2": {
       "title": "Chapter 11.2",
@@ -217,7 +217,7 @@
       "totalPages": 12,
       "pages": 12,
       "locked": false,
-      "views": 31
+      "views": 32
     },
     "12.1": {
       "title": "Chapter 12.1",
@@ -227,7 +227,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 38
+      "views": 40
     },
     "12.2": {
       "title": "Chapter 12.2",
@@ -237,7 +237,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 44
+      "views": 47
     },
     "13.1": {
       "title": "Chapter 13.1",
@@ -247,7 +247,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 107
+      "views": 112
     },
     "13.2": {
       "title": "Chapter 13.2",
@@ -257,7 +257,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 230
+      "views": 235
     },
     "14.1": {
       "title": "Chapter 14.1",
@@ -267,9 +267,9 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 159
+      "views": 176
     }
   },
-  "lastUpdated": "2025-12-20T00:22:44+07:00",
+  "lastUpdated": "2025-12-21T00:21:01+07:00",
   "lastChapterUpdate": "2025-12-17T19:43:41+07:00"
 }
