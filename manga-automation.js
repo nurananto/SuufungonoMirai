@@ -7,6 +7,7 @@
  * ✅ Sync codes from Cloudflare (Script 2)
  * ✅ EndChapter logic (Script 2)
  * ✅ WIB Timezone (GMT+7)
+ * ✅ Fixed: Daily views recording for new manga
  * 
  * Usage:
  * node manga-automation.js generate        → Generate manga.json
@@ -14,6 +15,8 @@
  * node manga-automation.js update-views    → Update manga views
  * node manga-automation.js update-chapters → Update chapter views
  * node manga-automation.js sync-codes      → Sync codes from Cloudflare (webtoon only)
+ * node manga-automation.js record-daily    → Record daily views
+ * node manga-automation.js cleanup-daily   → Cleanup old daily records
  */
 
 const fs = require('fs');
@@ -150,6 +153,43 @@ function getTotalPagesFromManifest(folderName) {
 }
 
 // ============================================
+// PENDING FILES HELPER
+// ============================================
+
+function ensurePendingFilesExist() {
+    console.log('🔍 Checking pending files...\n');
+    
+    let created = false;
+    
+    if (!fs.existsSync('pending-views.json')) {
+        console.log('📄 Creating pending-views.json...');
+        const initialPendingViews = {
+            pendingViews: 0,
+            lastIncrement: getWIBTimestamp(),
+            lastUpdate: getWIBTimestamp()
+        };
+        saveJSON('pending-views.json', initialPendingViews);
+        created = true;
+    }
+    
+    if (!fs.existsSync('pending-chapter-views.json')) {
+        console.log('📄 Creating pending-chapter-views.json...');
+        const initialPendingChapters = {
+            chapters: {},
+            lastUpdated: getWIBTimestamp()
+        };
+        saveJSON('pending-chapter-views.json', initialPendingChapters);
+        created = true;
+    }
+    
+    if (created) {
+        console.log('✅ Initial pending files created!\n');
+    } else {
+        console.log('✅ All pending files exist\n');
+    }
+}
+
+// ============================================
 // COMMAND 1: GENERATE MANGA.JSON
 // ============================================
 
@@ -266,17 +306,14 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         const folderExists = checkIfFolderExists(chapterName);
         const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
         
-const isInLockedList = config.lockedChapters.includes(chapterName);
+        const isInLockedList = config.lockedChapters.includes(chapterName);
 
-// ✅ BENAR - deklarasi dengan let
-let isLocked;
-if (config.type === 'webtoon') {
-    // Webtoon: locked berdasarkan config saja (manifest tetap ada)
-    isLocked = isInLockedList;
-} else {
-    // Manga: locked berdasarkan config + tidak ada manifest
-    isLocked = isInLockedList && totalPages === 0;
-}
+        let isLocked;
+        if (config.type === 'webtoon') {
+            isLocked = isInLockedList;
+        } else {
+            isLocked = isInLockedList && totalPages === 0;
+        }
         
         let uploadDate;
         if (isLocked && !folderExists) {
@@ -457,39 +494,6 @@ function commandGenerate() {
 // ============================================
 // COMMAND 2: SYNC CHAPTERS
 // ============================================
-
-function ensurePendingFilesExist() {
-    console.log('🔍 Checking pending files...\n');
-    
-    let created = false;
-    
-    if (!fs.existsSync('pending-views.json')) {
-        console.log('📄 Creating pending-views.json...');
-        const initialPendingViews = {
-            pendingViews: 0,
-            lastIncrement: getWIBTimestamp(),
-            lastUpdate: getWIBTimestamp()
-        };
-        saveJSON('pending-views.json', initialPendingViews);
-        created = true;
-    }
-    
-    if (!fs.existsSync('pending-chapter-views.json')) {
-        console.log('📄 Creating pending-chapter-views.json...');
-        const initialPendingChapters = {
-            chapters: {},
-            lastUpdated: getWIBTimestamp()
-        };
-        saveJSON('pending-chapter-views.json', initialPendingChapters);
-        created = true;
-    }
-    
-    if (created) {
-        console.log('✅ Initial pending files created!\n');
-    } else {
-        console.log('✅ All pending files exist\n');
-    }
-}
 
 function commandSync() {
     console.log('🔄 Starting chapter sync...\n');
@@ -708,9 +712,20 @@ async function syncCodesFromCloudflare() {
         
         console.log(`📡 Fetching codes from: ${workerUrl}`);
         
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch(`${workerUrl}?action=getAllCodes&repoName=${mangaConfig.repoName}`);
-        
+        const url = new URL(workerUrl);
+        url.searchParams.append('action', 'getAllCodes');
+        url.searchParams.append('repoName', mangaConfig.repoName);
+
+        const response = await new Promise((resolve, reject) => {
+            https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve({
+                    ok: res.statusCode === 200,
+                    json: async () => JSON.parse(data)
+                }));
+            }).on('error', reject);
+        }); 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
@@ -729,9 +744,6 @@ async function syncCodesFromCloudflare() {
     }
 }
 
-// ============================================
-// MAIN
-// ============================================
 // ============================================
 // DAILY VIEWS TRACKING
 // ============================================
@@ -755,7 +767,9 @@ function ensureDailyViewsFile() {
 function commandRecordDaily() {
     console.log('📊 Recording daily views...\n');
     
+    // ✅ FIX: Ensure ALL required files exist
     ensureDailyViewsFile();
+    ensurePendingFilesExist(); // ✅ Added this!
     
     const dailyViews = loadJSON('daily-views.json');
     const pendingViews = loadJSON('pending-views.json');
@@ -817,20 +831,27 @@ function commandCleanupDaily() {
         dailyViews.lastCleanup = getWIBTimestamp();
         saveJSON('daily-views.json', dailyViews);
         console.log(`✅ Removed ${removed} old records`);
+    } else {
+        console.log(`ℹ️  No old records to remove`);
     }
 }
+
+// ============================================
+// MAIN
+// ============================================
 
 function main() {
     const command = process.argv[2];
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║ MANGA AUTOMATION v6.0 COMPLETE       ║');
+    console.log('║ MANGA AUTOMATION v6.1 FIXED          ║');
     console.log('║ ✅ WIB Timezone (GMT+7)              ║');
     console.log('║ ✅ Manifest-based Detection          ║');
     console.log('║ 🎯 Oneshot Support                   ║');
     console.log('║ 🔒 Locked Chapters (manga/webtoon)   ║');
     console.log('║ 📱 Type Detection (manga/webtoon)    ║');
     console.log('║ 🔄 Auto-cleanup & Sync Codes         ║');
+    console.log('║ 🐛 Fixed: Daily views for new manga  ║');
     console.log('╚═══════════════════════════════════════╝\n');
     
     switch (command) {
@@ -865,6 +886,8 @@ function main() {
             console.log('  node manga-automation.js update-views    → Update manga views');
             console.log('  node manga-automation.js update-chapters → Update chapter views');
             console.log('  node manga-automation.js sync-codes      → Sync codes from Cloudflare (webtoon only)');
+            console.log('  node manga-automation.js record-daily    → Record daily views');
+            console.log('  node manga-automation.js cleanup-daily   → Cleanup old daily records');
             process.exit(1);
     }
 }
