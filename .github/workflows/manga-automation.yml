@@ -1,4 +1,4 @@
-name: 🔄 Manga Automation
+name: 📄 Manga Automation
 
 on:
   push:
@@ -8,9 +8,8 @@ on:
       - '**/manifest.json'
       - 'manga-config.json'
   
-  # ✅ AUTO-UPDATE SETIAP 24 JAM (00:00 WIB = 17:00 UTC)
   schedule:
-    - cron: '0 17 * * *'  # Setiap hari jam 00:00 WIB (midnight)
+    - cron: '0 17 * * *'  # 00:00 WIB
   
   workflow_dispatch:
 
@@ -21,23 +20,17 @@ jobs:
       contents: write
 
     steps:
-      # ========================================
-      # ⏱️ CRITICAL: WAIT FOR OTHER WORKFLOWS
-      # ========================================
       - name: ⏳ Wait for other workflows to complete
         if: github.event_name == 'push'
         run: |
-          echo "⏳ Waiting 30 seconds for other workflows..."
-          echo "   - encrypt-manifest.yml (if running)"
-          echo "   - sync-cover.yml (if running)"
+          echo "⏳ Waiting 30 seconds..."
           sleep 30
-          echo "✅ Wait complete, starting manga automation..."
 
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main  # ✅ Always pull latest (after other workflows)
+          ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 Setup Node.js
@@ -45,12 +38,8 @@ jobs:
         with:
           node-version: '18'
 
-      # ========================================
-      # ✅ NEW: AUTO-CREATE chapter-codes-local.json (WEBTOON ONLY)
-      # ========================================
-      - name: 📝 Ensure chapter-codes-local.json exists (Webtoon only)
+      - name: 📁 Ensure chapter-codes-local.json exists (Webtoon only)
         run: |
-          # Check manga type from manga-config.json
           MANGA_TYPE=$(jq -r '.type // "manga"' manga-config.json)
           
           if [ "$MANGA_TYPE" = "webtoon" ]; then
@@ -67,14 +56,10 @@ jobs:
             echo "📖 Type: $MANGA_TYPE - skipping chapter-codes-local.json"
           fi
 
-      # ========================================
-      # ✅ SYNC CODES FROM CLOUDFLARE KV (WEBTOON ONLY)
-      # ========================================
       - name: 🔄 Sync codes from Cloudflare KV (Webtoon only)
         env:
           CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
         run: |
-          # Check manga type
           MANGA_TYPE=$(jq -r '.type // "manga"' manga-config.json)
           
           if [ "$MANGA_TYPE" != "webtoon" ]; then
@@ -82,7 +67,6 @@ jobs:
             exit 0
           fi
           
-          # Check if file is empty or just has {}
           if [ ! -s chapter-codes-local.json ] || [ "$(cat chapter-codes-local.json | tr -d '[:space:]')" = "{}" ]; then
             echo "📥 chapter-codes-local.json is empty - syncing from Cloudflare KV..."
             node manga-automation.js sync-codes || true
@@ -90,11 +74,65 @@ jobs:
             echo "✅ chapter-codes-local.json has data"
           fi
 
+      - name: 📊 Record daily views
+        run: node manga-automation.js record-daily
+
+      - name: 🗑️  Cleanup old daily records
+        run: node manga-automation.js cleanup-daily
+
       - name: 📚 Generate manga.json
         env:
           SECRET_TOKEN: ${{ secrets.MANIFEST_SECRET_TOKEN }}
           CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
         run: node manga-automation.js generate
+
+      - name: 🗑️  Clean unlocked chapter codes from KV (Webtoon only)
+        if: success()
+        env:
+          CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
+        run: |
+          MANGA_TYPE=$(jq -r '.manga.type // "manga"' manga.json)
+          
+          if [ "$MANGA_TYPE" != "webtoon" ]; then
+            echo "📖 Type: $MANGA_TYPE - skipping KV cleanup"
+            exit 0
+          fi
+          
+          UNLOCKED_CHAPTERS=$(jq -r '.chapters | to_entries[] | select(.value.locked == false) | .key' manga.json)
+          
+          if [ -z "$UNLOCKED_CHAPTERS" ]; then
+            echo "ℹ️  No unlocked chapters found"
+            exit 0
+          fi
+          
+          REPO_NAME=$(jq -r '.repoName' manga-config.json)
+          
+          if [ -z "$REPO_NAME" ] || [ "$REPO_NAME" = "null" ]; then
+            echo "❌ Cannot get repoName from manga-config.json"
+            exit 1
+          fi
+          
+          echo "🗑️  Cleaning codes for unlocked chapters from KV..."
+          echo "📦 Repo: $REPO_NAME"
+          
+          CHAPTERS_JSON=$(echo "$UNLOCKED_CHAPTERS" | jq -R . | jq -s .)
+          
+          RESPONSE=$(curl -s -X POST "$CLOUDFLARE_WORKER_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"action\": \"deleteCodes\",
+              \"repoName\": \"$REPO_NAME\",
+              \"chapters\": $CHAPTERS_JSON
+            }")
+          
+          echo "📡 Worker response: $RESPONSE"
+          
+          if echo "$RESPONSE" | jq -e '.success' > /dev/null 2>&1; then
+            DELETED_COUNT=$(echo "$RESPONSE" | jq -r '.deleted // 0')
+            echo "✅ KV cleanup completed - deleted $DELETED_COUNT code(s)"
+          else
+            echo "⚠️  KV cleanup response: $RESPONSE"
+          fi
 
       - name: 🔄 Sync chapters
         run: node manga-automation.js sync
@@ -108,12 +146,14 @@ jobs:
       - name: 🔍 Check for changes
         id: check_changes
         run: |
-          # ✅ Add files only if they exist
           git add -A manga.json pending-views.json pending-chapter-views.json
           
-          # ✅ Add chapter-codes-local.json if exists and not empty
           if [ -f chapter-codes-local.json ]; then
             git add chapter-codes-local.json
+          fi
+          
+          if [ -f daily-views.json ]; then
+            git add daily-views.json
           fi
           
           if git diff --staged --quiet; then
@@ -131,34 +171,27 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Commit with timestamp
           TIMESTAMP=$(TZ='Asia/Jakarta' date '+%Y-%m-%d %H:%M:%S WIB')
           git commit -m "📊 Auto-update manga data - $TIMESTAMP [skip ci]"
           
-          # Push with conflict resolution retry logic
           echo "📤 Pushing changes with conflict resolution..."
           for i in {1..5}; do
             echo "📤 Push attempt $i/5..."
             
-            # Try to push
             if git push origin main 2>/dev/null; then
               echo "✅ Push successful!"
               exit 0
             fi
             
-            # Push failed, likely due to conflict
-            echo "⚠️ Push failed, pulling latest changes..."
+            echo "⚠️  Push failed, pulling latest changes..."
             
-            # Reset any merge conflicts
             git reset --hard HEAD
             git clean -fd
             
-            # Stash current changes
             COMMIT_MSG=$(git log -1 --pretty=%B)
             git reset --soft HEAD~1
             git stash
             
-            # Pull latest
             if ! git pull --no-rebase origin main; then
               echo "❌ Pull failed on attempt $i"
               git stash pop || true
@@ -173,34 +206,31 @@ jobs:
               continue
             fi
             
-            # Re-apply stashed changes
             if git stash pop; then
-              # Re-add files
               git add -A manga.json pending-views.json pending-chapter-views.json
               [ -f chapter-codes-local.json ] && git add chapter-codes-local.json || true
+              [ -f daily-views.json ] && git add daily-views.json || true
               
-              # Re-commit with original message
               git commit -m "$COMMIT_MSG" || {
-                echo "⚠️ No changes to commit after merge"
+                echo "⚠️  No changes to commit after merge"
                 exit 0
               }
             else
-              echo "⚠️ Stash pop failed, trying manual resolution..."
+              echo "⚠️  Stash pop failed, trying manual resolution..."
               
-              # Handle conflict: keep our changes for pending files
               git checkout --ours pending-views.json pending-chapter-views.json 2>/dev/null || true
               [ -f chapter-codes-local.json ] && git checkout --ours chapter-codes-local.json 2>/dev/null || true
+              [ -f daily-views.json ] && git checkout --ours daily-views.json 2>/dev/null || true
               git checkout --theirs manga.json 2>/dev/null || true
               
               git add -A manga.json pending-views.json pending-chapter-views.json
               [ -f chapter-codes-local.json ] && git add chapter-codes-local.json || true
+              [ -f daily-views.json ] && git add daily-views.json || true
               git commit -m "$COMMIT_MSG" || {
-                echo "⚠️ No changes to commit after conflict resolution"
+                echo "⚠️  No changes to commit after conflict resolution"
                 exit 0
               }
             fi
-            
-            # Loop will retry push
           done
           
           echo "❌ Failed to push after 5 attempts"
@@ -210,7 +240,6 @@ jobs:
         id: structural_check
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          # ✅ IMPROVED: Check if manga-config.json changed in THIS commit
           if git diff HEAD~1 HEAD --name-only 2>/dev/null | grep -q "manga-config\.json"; then
             echo "has_structural_changes=true" >> $GITHUB_OUTPUT
             echo "✅ manga-config.json changed - triggering rebuild"
@@ -219,7 +248,6 @@ jobs:
             exit 0
           fi
           
-          # Check apakah manga.json baru pertama kali dibuat
           if git diff HEAD~1 HEAD --name-status 2>/dev/null | grep -q "^A.*manga\.json$"; then
             echo "has_structural_changes=true" >> $GITHUB_OUTPUT
             echo "🎉 First-time generation detected!"
@@ -228,17 +256,12 @@ jobs:
             exit 0
           fi
           
-          # Check if manga.json has chapter changes (not just views)
           if [ -f manga.json ]; then
-            # Count chapters in current manga.json
             CURRENT_CHAPTERS=$(jq '.chapters | length' manga.json 2>/dev/null || echo "0")
-            
-            # Try to get old chapter count from previous commit
             OLD_CHAPTERS=$(git show HEAD~1:manga.json 2>/dev/null | jq '.chapters | length' 2>/dev/null || echo "0")
             
             echo "📊 Chapter count: $OLD_CHAPTERS → $CURRENT_CHAPTERS"
             
-            # If chapter count changed = structural change
             if [ "$CURRENT_CHAPTERS" != "$OLD_CHAPTERS" ]; then
               echo "has_structural_changes=true" >> $GITHUB_OUTPUT
               echo "✅ Chapter count changed (structural)"
@@ -248,7 +271,6 @@ jobs:
             fi
           fi
           
-          # Check manifest/config changes in git diff
           if git diff HEAD~1 HEAD --name-only 2>/dev/null | grep -qE '(manifest\.json|chapters/)'; then
             echo "has_structural_changes=true" >> $GITHUB_OUTPUT
             echo "✅ Manifest changed"
@@ -257,14 +279,12 @@ jobs:
             exit 0
           fi
           
-          # Check if ONLY views/codes changed
           CHANGED_FILES=$(git diff HEAD~1 HEAD --name-only 2>/dev/null | tr '\n' ' ')
-          if echo "$CHANGED_FILES" | grep -qE '(pending-views\.json|pending-chapter-views\.json|chapter-codes-local\.json)' && \
-             ! echo "$CHANGED_FILES" | grep -qvE '(pending-views\.json|pending-chapter-views\.json|manga\.json|chapter-codes-local\.json)'; then
+          if echo "$CHANGED_FILES" | grep -qE '(pending-views\.json|pending-chapter-views\.json|chapter-codes-local\.json|daily-views\.json)' && \
+             ! echo "$CHANGED_FILES" | grep -qvE '(pending-views\.json|pending-chapter-views\.json|manga\.json|chapter-codes-local\.json|daily-views\.json)'; then
             echo "has_structural_changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️  Only view counter updated (no structural changes)"
           else
-            # manga.json changed but not just views
             echo "has_structural_changes=true" >> $GITHUB_OUTPUT
             echo "✅ Structural data changed"
             echo "trigger_reason=structural_changed" >> $GITHUB_OUTPUT
@@ -277,7 +297,6 @@ jobs:
           steps.check_changes.outputs.has_changes == 'true' && 
           steps.structural_check.outputs.has_structural_changes == 'true'
         run: |
-          # Tentukan message berdasarkan tipe perubahan
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
           TRIGGER_REASON="${{ steps.structural_check.outputs.trigger_reason }}"
           
@@ -302,7 +321,6 @@ jobs:
           
           echo "📤 Triggering rebuild: $MESSAGE"
           
-          # ✅ Using PAT_TOKEN
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
@@ -320,10 +338,10 @@ jobs:
           steps.check_changes.outputs.has_changes != 'true' ||
           steps.structural_check.outputs.has_structural_changes != 'true'
         run: |
-          echo "❌️ Skipping website trigger"
+          echo "⛔️ Skipping website trigger"
           echo "✅ Website will be triggered for:"
           echo "   - First-time manga.json creation"
-          echo "   - manga-config.json changes (locked chapters, etc.)"
+          echo "   - manga-config.json changes"
           echo "   - New chapters (manifest.json changes)"
           echo "   - Chapter folder changes"
           echo "   - Chapter count changes"
@@ -332,6 +350,7 @@ jobs:
           echo "   - View counter updates (pending-views.json)"
           echo "   - Chapter view updates (pending-chapter-views.json)"
           echo "   - Code tracking updates (chapter-codes-local.json)"
+          echo "   - Daily views tracking (daily-views.json)"
           echo ""
           if [ "${{ github.event_name }}" == "schedule" ]; then
             echo "ℹ️  This was a scheduled run (daily view update)"

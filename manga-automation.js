@@ -732,6 +732,93 @@ async function syncCodesFromCloudflare() {
 // ============================================
 // MAIN
 // ============================================
+// ============================================
+// DAILY VIEWS TRACKING
+// ============================================
+
+function getWIBDateString() {
+    const date = new Date();
+    return date.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+}
+
+function ensureDailyViewsFile() {
+    if (!fs.existsSync('daily-views.json')) {
+        console.log('📄 Creating daily-views.json...');
+        const initialData = {
+            lastCleanup: getWIBTimestamp(),
+            dailyRecords: {}
+        };
+        saveJSON('daily-views.json', initialData);
+    }
+}
+
+function commandRecordDaily() {
+    console.log('📊 Recording daily views...\n');
+    
+    ensureDailyViewsFile();
+    
+    const dailyViews = loadJSON('daily-views.json');
+    const pendingViews = loadJSON('pending-views.json');
+    const pendingChapterViews = loadJSON('pending-chapter-views.json');
+    
+    if (!dailyViews || !pendingViews || !pendingChapterViews) {
+        console.error('❌ Required files not found');
+        process.exit(1);
+    }
+    
+    const today = getWIBDateString();
+    
+    if (!dailyViews.dailyRecords[today]) {
+        dailyViews.dailyRecords[today] = { manga: 0, chapters: {} };
+    }
+    
+    const mangaViews = pendingViews.pendingViews || 0;
+    if (mangaViews > 0) {
+        dailyViews.dailyRecords[today].manga += mangaViews;
+        console.log(`📈 Manga: +${mangaViews}`);
+    }
+    
+    Object.keys(pendingChapterViews.chapters || {}).forEach(chapterFolder => {
+        const views = pendingChapterViews.chapters[chapterFolder].pendingViews || 0;
+        if (views > 0) {
+            if (!dailyViews.dailyRecords[today].chapters[chapterFolder]) {
+                dailyViews.dailyRecords[today].chapters[chapterFolder] = 0;
+            }
+            dailyViews.dailyRecords[today].chapters[chapterFolder] += views;
+        }
+    });
+    
+    if (saveJSON('daily-views.json', dailyViews)) {
+        console.log(`✅ Daily views recorded for ${today}`);
+    }
+}
+
+function commandCleanupDaily() {
+    console.log('🗑️  Cleaning old records...\n');
+    
+    ensureDailyViewsFile();
+    
+    const dailyViews = loadJSON('daily-views.json');
+    const today = new Date();
+    const cutoff = new Date(today);
+    cutoff.setDate(cutoff.getDate() - 7);
+    
+    const cutoffStr = cutoff.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+    
+    let removed = 0;
+    Object.keys(dailyViews.dailyRecords).forEach(dateKey => {
+        if (dateKey < cutoffStr) {
+            delete dailyViews.dailyRecords[dateKey];
+            removed++;
+        }
+    });
+    
+    if (removed > 0) {
+        dailyViews.lastCleanup = getWIBTimestamp();
+        saveJSON('daily-views.json', dailyViews);
+        console.log(`✅ Removed ${removed} old records`);
+    }
+}
 
 function main() {
     const command = process.argv[2];
@@ -764,6 +851,12 @@ function main() {
                 await syncCodesFromCloudflare();
                 console.log('✅ Done!');
             })();
+            break;
+        case 'record-daily':
+            commandRecordDaily();
+            break;
+        case 'cleanup-daily':
+            commandCleanupDaily();
             break;
         default:
             console.log('Usage:');
