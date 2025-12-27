@@ -1,9 +1,9 @@
 {
   "chapters": {
     "1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-27T04:08:54.437Z",
-      "lastUpdate": "2025-12-27T00:23:13+07:00"
+      "lastUpdate": "2025-12-28T00:22:17+07:00"
     },
     "2": {
       "pendingViews": 0,
@@ -111,15 +111,15 @@
       "lastUpdate": "2025-12-27T00:23:13+07:00"
     },
     "13.2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-27T04:09:11.957Z",
-      "lastUpdate": "2025-12-27T00:23:13+07:00"
+      "lastUpdate": "2025-12-28T00:22:17+07:00"
     },
     "14.1": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-27T07:13:44.258Z",
-      "lastUpdate": "2025-12-27T00:23:13+07:00"
+      "lastUpdate": "2025-12-28T00:22:17+07:00"
     }
   },
-  "lastUpdated": "2025-12-27T00:23:13+07:00"
+  "lastUpdated": "2025-12-28T00:22:17+07:00"
 }
