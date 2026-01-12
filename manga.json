@@ -17,7 +17,7 @@
       "Slice of Life"
     ],
     "status": "ONGOING",
-    "views": 964,
+    "views": 970,
     "links": {
       "mangadex": "https://mangadex.org/title/16c34950-954c-4f0d-808e-d8278a546339/suufungo-no-mirai-ga-wakaru-you-ni-natta-kedo-onnagokoro-wa-wakaranai",
       "raw": "https://comic-walker.com/detail/KC_005690_S"
@@ -37,7 +37,7 @@
       "totalPages": 44,
       "pages": 44,
       "locked": false,
-      "views": 137
+      "views": 138
     },
     "2": {
       "title": "Chapter 2",
@@ -47,7 +47,7 @@
       "totalPages": 30,
       "pages": 30,
       "locked": false,
-      "views": 66
+      "views": 68
     },
     "3": {
       "title": "Chapter 3",
@@ -257,7 +257,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 296
+      "views": 297
     },
     "14.1": {
       "title": "Chapter 14.1",
@@ -277,9 +277,9 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 173
+      "views": 174
     }
   },
-  "lastUpdated": "2026-01-12T00:22:39+07:00",
+  "lastUpdated": "2026-01-13T00:28:20+07:00",
   "lastChapterUpdate": "2025-12-30T14:18:15+07:00"
 }
