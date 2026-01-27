@@ -2,19 +2,15 @@
  * MANGA-AUTOMATION.JS - COMPLETE MERGED VERSION
  * ✅ Manifest-based detection (Script 1)
  * ✅ Oneshot support (Script 1)
- * ✅ Auto-cleanup locked chapters (Script 1)
- * ✅ Type detection manga/webtoon (Script 2)
- * ✅ Sync codes from Cloudflare (Script 2)
+ * ✅ Locked chapters (logic for all types)
  * ✅ EndChapter logic (Script 2)
  * ✅ WIB Timezone (GMT+7)
  * ✅ Fixed: Daily views recording for new manga
  * 
  * Usage:
  * node manga-automation.js generate        → Generate manga.json
- * node manga-automation.js sync            → Sync chapters
  * node manga-automation.js update-views    → Update manga views
  * node manga-automation.js update-chapters → Update chapter views
- * node manga-automation.js sync-codes      → Sync codes from Cloudflare (webtoon only)
  * node manga-automation.js record-daily    → Record daily views
  * node manga-automation.js cleanup-daily   → Cleanup old daily records
  */
@@ -308,12 +304,8 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         
         const isInLockedList = config.lockedChapters.includes(chapterName);
 
-        let isLocked;
-        if (config.type === 'webtoon') {
-            isLocked = isInLockedList;
-        } else {
-            isLocked = isInLockedList && totalPages === 0;
-        }
+        // ✅ All types use locked logic: only check if in lockedChapters list
+        const isLocked = isInLockedList;
         
         let uploadDate;
         if (isLocked && !folderExists) {
@@ -354,24 +346,6 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         const dateStr = uploadDate.split('T')[0];
         console.log(`${lockIcon}${typeIcon} ${chapterName} - ${totalPages} pages - ${dateStr} - ${views} views`);
     });
-    
-    const updatedLockedChapters = config.lockedChapters.filter(chapterName => {
-        const folderExists = checkIfFolderExists(chapterName);
-        const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
-        return totalPages === 0;
-    });
-    
-    if (updatedLockedChapters.length !== config.lockedChapters.length) {
-        console.log('\n🔓 Auto-removing uploaded chapters from lockedChapters...');
-        const removed = config.lockedChapters.filter(ch => !updatedLockedChapters.includes(ch));
-        console.log(`   Removed: ${removed.join(', ')}`);
-        
-        config.lockedChapters = updatedLockedChapters;
-        
-        if (saveJSON('manga-config.json', config)) {
-            console.log('✅ manga-config.json updated');
-        }
-    }
     
     let lastChapterUpdate = null;
     
@@ -492,69 +466,7 @@ function commandGenerate() {
 }
 
 // ============================================
-// COMMAND 2: SYNC CHAPTERS
-// ============================================
-
-function commandSync() {
-    console.log('🔄 Starting chapter sync...\n');
-    
-    const mangaData = loadJSON('manga.json');
-    
-    if (!mangaData || !mangaData.chapters) {
-        console.error('❌ No chapters found in manga.json');
-        process.exit(1);
-    }
-    
-    console.log(`📚 manga.json found with ${Object.keys(mangaData.chapters).length} chapters`);
-    
-    let pendingData = {
-        chapters: {},
-        lastUpdated: getWIBTimestamp()
-    };
-    
-    const existingPending = loadJSON('pending-chapter-views.json');
-    if (existingPending) {
-        console.log('📖 Found existing pending-chapter-views.json');
-        pendingData.chapters = existingPending.chapters || {};
-    } else {
-        console.log('📖 Creating new pending-chapter-views.json');
-    }
-    
-    let addedCount = 0;
-    const totalChapters = Object.keys(mangaData.chapters).length;
-    
-    console.log('\n📋 Syncing chapters:');
-    
-    Object.keys(mangaData.chapters).forEach(chapterKey => {
-        if (!pendingData.chapters[chapterKey]) {
-            pendingData.chapters[chapterKey] = {
-                pendingViews: 0,
-                lastIncrement: getWIBTimestamp(),
-                lastUpdate: getWIBTimestamp()
-            };
-            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✔';
-            console.log(`  ${icon} Added new chapter: ${chapterKey}`);
-            addedCount++;
-        } else {
-            const icon = isOneshotFolder(chapterKey) ? '🎯' : '✔';
-            console.log(`  ${icon} Chapter ${chapterKey} already exists`);
-        }
-    });
-    
-    pendingData.lastUpdated = getWIBTimestamp();
-    
-    if (saveJSON('pending-chapter-views.json', pendingData)) {
-        console.log(`\n✅ Sync completed!`);
-        console.log(`📊 Total chapters: ${totalChapters}`);
-        console.log(`📈 New chapters added: ${addedCount}`);
-        console.log(`🕐 Last updated: ${pendingData.lastUpdated}`);
-    } else {
-        process.exit(1);
-    }
-}
-
-// ============================================
-// COMMAND 3: UPDATE MANGA VIEWS
+// COMMAND 2: UPDATE MANGA VIEWS
 // ============================================
 
 function commandUpdateViews() {
@@ -597,7 +509,7 @@ function commandUpdateViews() {
 }
 
 // ============================================
-// COMMAND 4: UPDATE CHAPTER VIEWS
+// COMMAND 3: UPDATE CHAPTER VIEWS
 // ============================================
 
 function commandUpdateChapterViews() {
@@ -673,74 +585,6 @@ function commandUpdateChapterViews() {
         }
     } else {
         console.log(`\n⏳ No chapters reached threshold yet`);
-    }
-}
-
-// ============================================
-// COMMAND 5: SYNC CODES FROM CLOUDFLARE (WEBTOON ONLY)
-// ============================================
-
-async function syncCodesFromCloudflare() {
-    try {
-        console.log('🔄 Syncing codes from Cloudflare KV...');
-        
-        if (!fs.existsSync('manga-config.json')) {
-            console.log('⚠️ manga-config.json not found!');
-            return;
-        }
-        
-        const mangaConfig = JSON.parse(fs.readFileSync('manga-config.json', 'utf8'));
-        
-        if (mangaConfig.type !== 'webtoon') {
-            console.log(`ℹ️ Type is ${mangaConfig.type}, skipping code sync`);
-            return;
-        }
-        
-        if (fs.existsSync('chapter-codes-local.json')) {
-            const localCodes = JSON.parse(fs.readFileSync('chapter-codes-local.json', 'utf8'));
-            if (Object.keys(localCodes).length > 0) {
-                console.log('✅ chapter-codes-local.json already has data, skipping sync');
-                return;
-            }
-        }
-        
-        const workerUrl = process.env.CLOUDFLARE_WORKER_URL;
-        if (!workerUrl) {
-            console.log('⚠️ CLOUDFLARE_WORKER_URL not set, skipping code sync');
-            return;
-        }
-        
-        console.log(`📡 Fetching codes from: ${workerUrl}`);
-        
-        const url = new URL(workerUrl);
-        url.searchParams.append('action', 'getAllCodes');
-        url.searchParams.append('repoName', mangaConfig.repoName);
-
-        const response = await new Promise((resolve, reject) => {
-            https.get(url, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => resolve({
-                    ok: res.statusCode === 200,
-                    json: async () => JSON.parse(data)
-                }));
-            }).on('error', reject);
-        }); 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.codes) {
-            fs.writeFileSync('chapter-codes-local.json', JSON.stringify(data.codes, null, 2));
-            console.log(`✅ Synced ${Object.keys(data.codes).length} codes from Cloudflare KV`);
-        } else {
-            console.log('ℹ️ No codes found in Cloudflare KV');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error syncing codes:', error.message);
     }
 }
 
@@ -844,13 +688,11 @@ function main() {
     const command = process.argv[2];
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║ MANGA AUTOMATION v6.1 FIXED          ║');
+    console.log('║ MANGA AUTOMATION v6.2                  ║');
     console.log('║ ✅ WIB Timezone (GMT+7)              ║');
     console.log('║ ✅ Manifest-based Detection          ║');
     console.log('║ 🎯 Oneshot Support                   ║');
-    console.log('║ 🔒 Locked Chapters (manga/webtoon)   ║');
-    console.log('║ 📱 Type Detection (manga/webtoon)    ║');
-    console.log('║ 🔄 Auto-cleanup & Sync Codes         ║');
+    console.log('║ 🔒 Locked Chapters                    ║');
     console.log('║ 🐛 Fixed: Daily views for new manga  ║');
     console.log('╚═══════════════════════════════════════╝\n');
     
@@ -858,20 +700,11 @@ function main() {
         case 'generate':
             commandGenerate();
             break;
-        case 'sync':
-            commandSync();
-            break;
         case 'update-views':
             commandUpdateViews();
             break;
         case 'update-chapters':
             commandUpdateChapterViews();
-            break;
-        case 'sync-codes':
-            (async () => {
-                await syncCodesFromCloudflare();
-                console.log('✅ Done!');
-            })();
             break;
         case 'record-daily':
             commandRecordDaily();
@@ -882,10 +715,8 @@ function main() {
         default:
             console.log('Usage:');
             console.log('  node manga-automation.js generate        → Generate manga.json');
-            console.log('  node manga-automation.js sync            → Sync chapters');
             console.log('  node manga-automation.js update-views    → Update manga views');
             console.log('  node manga-automation.js update-chapters → Update chapter views');
-            console.log('  node manga-automation.js sync-codes      → Sync codes from Cloudflare (webtoon only)');
             console.log('  node manga-automation.js record-daily    → Record daily views');
             console.log('  node manga-automation.js cleanup-daily   → Cleanup old daily records');
             process.exit(1);

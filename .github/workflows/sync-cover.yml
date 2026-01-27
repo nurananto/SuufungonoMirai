@@ -36,12 +36,28 @@ jobs:
           WEBSITE_CONFIG_URL="https://raw.githubusercontent.com/nurananto/nuranantoscans/main/manga-config.js"
           
           echo "[FETCH] Downloading manga-config.js..."
-          curl -s "$WEBSITE_CONFIG_URL" -o /tmp/website-config.js
           
-          if [ ! -f /tmp/website-config.js ]; then
-            echo "[FAILED] Failed to download manga-config.js"
-            exit 1
-          fi
+          # Retry mechanism: GitHub might need a few seconds to process commit
+          MAX_RETRIES=5
+          RETRY_DELAY=3
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "[FETCH] Attempt $i/$MAX_RETRIES..."
+            curl -s "$WEBSITE_CONFIG_URL" -o /tmp/website-config.js
+            
+            if [ -f /tmp/website-config.js ] && [ -s /tmp/website-config.js ]; then
+              echo "[SUCCESS] manga-config.js downloaded successfully"
+              break
+            else
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "[RETRY] File not available yet, waiting ${RETRY_DELAY}s..."
+                sleep $RETRY_DELAY
+              else
+                echo "[FAILED] Failed to download manga-config.js after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
           
           # Extract R2 cover URL for this repo
           echo "[EXTRACT] Extracting cover URL for $REPO_NAME..."

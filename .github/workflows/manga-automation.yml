@@ -38,41 +38,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: 📝 Ensure chapter-codes-local.json exists (Webtoon only)
-        run: |
-          MANGA_TYPE=$(jq -r '.type // "manga"' manga-config.json)
-          
-          if [ "$MANGA_TYPE" = "webtoon" ]; then
-            echo "📱 Type: webtoon - checking chapter-codes-local.json..."
-            
-            if [ ! -f chapter-codes-local.json ]; then
-              echo "🆕 Creating empty chapter-codes-local.json..."
-              echo "{}" > chapter-codes-local.json
-              echo "✅ chapter-codes-local.json created"
-            else
-              echo "✅ chapter-codes-local.json already exists"
-            fi
-          else
-            echo "📖 Type: $MANGA_TYPE - skipping chapter-codes-local.json"
-          fi
-
-      - name: 🔄 Sync codes from Cloudflare KV (Webtoon only)
-        env:
-          CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
-        run: |
-          MANGA_TYPE=$(jq -r '.type // "manga"' manga-config.json)
-          
-          if [ "$MANGA_TYPE" != "webtoon" ]; then
-            echo "📖 Type: $MANGA_TYPE - skipping code sync"
-            exit 0
-          fi
-          
-          if [ ! -s chapter-codes-local.json ] || [ "$(cat chapter-codes-local.json | tr -d '[:space:]')" = "{}" ]; then
-            echo "📥 chapter-codes-local.json is empty - syncing from Cloudflare KV..."
-            node manga-automation.js sync-codes || true
-          else
-            echo "✅ chapter-codes-local.json has data"
-          fi
 
       - name: 📊 Record daily views
         run: node manga-automation.js record-daily
@@ -86,57 +51,6 @@ jobs:
           CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
         run: node manga-automation.js generate
 
-      - name: 🗑️ Clean unlocked chapter codes from KV (Webtoon only)
-        if: false  # ✅ DISABLED - TTL will auto-cleanup, saves 99% delete operations
-        env:
-          CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
-        run: |
-          MANGA_TYPE=$(jq -r '.manga.type // "manga"' manga.json)
-          
-          if [ "$MANGA_TYPE" != "webtoon" ]; then
-            echo "📖 Type: $MANGA_TYPE - skipping KV cleanup"
-            exit 0
-          fi
-          
-          UNLOCKED_CHAPTERS=$(jq -r '.chapters | to_entries[] | select(.value.locked == false) | .key' manga.json)
-          
-          if [ -z "$UNLOCKED_CHAPTERS" ]; then
-            echo "ℹ️ No unlocked chapters found"
-            exit 0
-          fi
-          
-          REPO_NAME=$(jq -r '.repoName' manga-config.json)
-          
-          if [ -z "$REPO_NAME" ] || [ "$REPO_NAME" = "null" ]; then
-            echo "❌ Cannot get repoName from manga-config.json"
-            exit 1
-          fi
-          
-          echo "🗑️ Cleaning codes for unlocked chapters from KV..."
-          echo "📦 Repo: $REPO_NAME"
-          
-          CHAPTERS_JSON=$(echo "$UNLOCKED_CHAPTERS" | jq -R . | jq -s .)
-          
-          RESPONSE=$(curl -s -X POST "$CLOUDFLARE_WORKER_URL" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"action\": \"deleteCodes\",
-              \"repoName\": \"$REPO_NAME\",
-              \"chapters\": $CHAPTERS_JSON
-            }")
-          
-          echo "📡 Worker response: $RESPONSE"
-          
-          if echo "$RESPONSE" | jq -e '.success' > /dev/null 2>&1; then
-            DELETED_COUNT=$(echo "$RESPONSE" | jq -r '.deleted // 0')
-            echo "✅ KV cleanup completed - deleted $DELETED_COUNT code(s)"
-          else
-            echo "⚠️ KV cleanup response: $RESPONSE"
-          fi
-
-      - name: 🔄 Sync chapters
-        run: node manga-automation.js sync
-
       - name: 📊 Update manga views
         run: node manga-automation.js update-views
 
@@ -147,10 +61,6 @@ jobs:
         id: check_changes
         run: |
           git add -A manga.json pending-views.json pending-chapter-views.json
-          
-          if [ -f chapter-codes-local.json ]; then
-            git add chapter-codes-local.json
-          fi
           
           if [ -f daily-views.json ]; then
             git add daily-views.json
@@ -208,7 +118,6 @@ jobs:
             
             if git stash pop; then
               git add -A manga.json pending-views.json pending-chapter-views.json
-              [ -f chapter-codes-local.json ] && git add chapter-codes-local.json || true
               [ -f daily-views.json ] && git add daily-views.json || true
               
               git commit -m "$COMMIT_MSG" || {
@@ -219,12 +128,10 @@ jobs:
               echo "⚠️ Stash pop failed, trying manual resolution..."
               
               git checkout --ours pending-views.json pending-chapter-views.json 2>/dev/null || true
-              [ -f chapter-codes-local.json ] && git checkout --ours chapter-codes-local.json 2>/dev/null || true
               [ -f daily-views.json ] && git checkout --ours daily-views.json 2>/dev/null || true
               git checkout --theirs manga.json 2>/dev/null || true
               
               git add -A manga.json pending-views.json pending-chapter-views.json
-              [ -f chapter-codes-local.json ] && git add chapter-codes-local.json || true
               [ -f daily-views.json ] && git add daily-views.json || true
               git commit -m "$COMMIT_MSG" || {
                 echo "⚠️ No changes to commit after conflict resolution"
@@ -280,8 +187,8 @@ jobs:
           fi
           
           CHANGED_FILES=$(git diff HEAD~1 HEAD --name-only 2>/dev/null | tr '\n' ' ')
-          if echo "$CHANGED_FILES" | grep -qE '(pending-views\.json|pending-chapter-views\.json|chapter-codes-local\.json|daily-views\.json)' && \
-             ! echo "$CHANGED_FILES" | grep -qvE '(pending-views\.json|pending-chapter-views\.json|manga\.json|chapter-codes-local\.json|daily-views\.json)'; then
+          if echo "$CHANGED_FILES" | grep -qE '(pending-views\.json|pending-chapter-views\.json|daily-views\.json)' && \
+             ! echo "$CHANGED_FILES" | grep -qvE '(pending-views\.json|pending-chapter-views\.json|manga\.json|daily-views\.json)'; then
             echo "has_structural_changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️ Only view counter updated (no structural changes)"
           else
@@ -349,7 +256,6 @@ jobs:
           echo "❌ NOT triggered for:"
           echo "   - View counter updates (pending-views.json)"
           echo "   - Chapter view updates (pending-chapter-views.json)"
-          echo "   - Code tracking updates (chapter-codes-local.json)"
           echo "   - Daily views tracking (daily-views.json)"
           echo ""
           if [ "${{ github.event_name }}" == "schedule" ]; then

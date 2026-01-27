@@ -36,9 +36,13 @@ jobs:
         env:
           SECRET_TOKEN: ${{ secrets.MANIFEST_SECRET_TOKEN }}
           # Force scan if manual trigger with force_scan = true
-          FORCE_SCAN_ALL: ${{ github.event.inputs.force_scan == 'true' || 'false' }}
+          FORCE_SCAN_ALL: ${{ github.event.inputs.force_scan == 'true' && 'true' || 'false' }}
         run: |
-          echo "🔍 Encryption Mode: $FORCE_SCAN_ALL"
+          if [ "$FORCE_SCAN_ALL" = "true" ]; then
+            echo "🔥 Force Mode: Will scan ALL manifests"
+          else
+            echo "🔍 Auto Mode: Will detect unencrypted manifests"
+          fi
           node encrypt-manifest.js
       
       - name: 📝 Check for changes
@@ -52,16 +56,23 @@ jobs:
             echo "✅ Manifests encrypted!"
             git status --short
           fi
+        continue-on-error: true
       
       - name: 💾 Commit encrypted manifests
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --local user.name 'github-actions[bot]'
+          git config --local user.email 'github-actions[bot]@users.noreply.github.com'
           
-          git add '**/manifest.json'
+          # Add only modified manifest.json files
+          find . -name "manifest.json" -type f | while read file; do
+            if git status --porcelain "$file" | grep -q "^.M\|^M"; then
+              git add "$file"
+              echo "✅ Added: $file"
+            fi
+          done
           
-          # ✅ Hapus [skip ci] agar manga-automation bisa jalan
+          # ✅ No [skip ci] so manga-automation.yml will trigger automatically
           git commit -m "🔐 Encrypt new manifest"
           git push origin main
           
