@@ -1,9 +1,9 @@
 {
   "chapters": {
     "1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T09:19:11.570Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "2": {
       "pendingViews": 0,
@@ -96,39 +96,39 @@
       "lastUpdate": "2026-01-31T00:39:27+07:00"
     },
     "12.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:17:06.368Z",
-      "lastUpdate": "2026-01-31T00:39:27+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "12.2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:18:00.564Z",
-      "lastUpdate": "2026-01-31T00:39:27+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "13.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:18:47.613Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "13.2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:19:22.613Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "14.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:19:59.950Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "14.2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T01:20:39.452Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     },
     "15.1": {
-      "pendingViews": 4,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-02T14:42:12.564Z",
-      "lastUpdate": "2026-02-02T00:30:14+07:00"
+      "lastUpdate": "2026-02-03T00:43:23+07:00"
     }
   },
   "lastUpdated": "2026-01-27T00:35:26+07:00"
