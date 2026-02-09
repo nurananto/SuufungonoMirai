@@ -1,9 +1,15 @@
+
 name: Sync Cover from Website (R2)
 
 on:
+  push:
+    paths:
+      - 'manga.json'
+      - 'manga-config.json'
   repository_dispatch:
     types: [sync-covers]
   workflow_dispatch:
+
 
 permissions:
   contents: write
