@@ -1,138 +1,139 @@
 {
   "chapters": {
     "1": {
-      "pendingViews": 5,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T16:26:49.628Z",
-      "lastUpdate": "2026-02-09T00:33:03+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T07:53:47.040Z",
-      "lastUpdate": "2026-02-09T00:33:03+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "3": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T08:15:40.468Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "4.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T08:18:36.960Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "4.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:24:01.023Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "5.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:24:28.441Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "5.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:25:53.992Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "6.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:26:49.966Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "6.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:27:31.336Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "7.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:29:01.899Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "7.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:31:16.591Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "8.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:33:04.889Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "8.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:34:23.508Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "9.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:35:30.015Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "9.2": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:38:22.047Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "10.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:40:16.403Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "10.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:41:59.707Z",
-      "lastUpdate": "2026-02-10T00:54:05+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "11.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:44:15.733Z",
-      "lastUpdate": "2026-02-06T00:52:12+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "11.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:45:43.237Z",
-      "lastUpdate": "2026-02-13T00:58:07+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "12.1": {
-      "pendingViews": 4,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:46:28.053Z",
-      "lastUpdate": "2026-02-13T00:58:07+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "12.2": {
-      "pendingViews": 4,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:48:17.614Z",
-      "lastUpdate": "2026-02-13T00:58:07+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "13.1": {
-      "pendingViews": 5,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:49:40.355Z",
-      "lastUpdate": "2026-02-13T00:58:07+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "13.2": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T09:23:29.625Z",
-      "lastUpdate": "2026-02-17T00:42:15+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "14.1": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T09:22:46.363Z",
-      "lastUpdate": "2026-02-17T00:42:15+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "14.2": {
-      "pendingViews": 4,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T09:35:07.676Z",
-      "lastUpdate": "2026-02-17T00:42:15+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "15.1": {
-      "pendingViews": 14,
+      "pendingViews": 0,
       "lastIncrement": "2026-02-17T15:47:31.287Z",
-      "lastUpdate": "2026-02-17T11:43:41+07:00"
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     },
     "15.2": {
-      "pendingViews": 62,
-      "lastIncrement": "2026-02-17T17:35:57.754Z"
+      "pendingViews": 0,
+      "lastIncrement": "2026-02-17T17:35:57.754Z",
+      "lastUpdate": "2026-02-18T00:57:01+07:00"
     }
   },
   "lastUpdated": "2026-01-27T00:35:26+07:00"
