@@ -47,7 +47,7 @@
       "totalPages": 30,
       "pages": 30,
       "locked": false,
-      "views": 98
+      "views": 99
     },
     "3": {
       "title": "Chapter 3",
@@ -57,7 +57,7 @@
       "totalPages": 29,
       "pages": 29,
       "locked": false,
-      "views": 81
+      "views": 82
     },
     "4.1": {
       "title": "Chapter 4.1",
@@ -67,7 +67,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 83
+      "views": 84
     },
     "4.2": {
       "title": "Chapter 4.2",
@@ -87,7 +87,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 71
+      "views": 72
     },
     "5.2": {
       "title": "Chapter 5.2",
@@ -97,7 +97,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 75
+      "views": 76
     },
     "6.1": {
       "title": "Chapter 6.1",
@@ -107,7 +107,7 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 67
+      "views": 68
     },
     "6.2": {
       "title": "Chapter 6.2",
@@ -117,7 +117,7 @@
       "totalPages": 12,
       "pages": 12,
       "locked": false,
-      "views": 70
+      "views": 71
     },
     "7.1": {
       "title": "Chapter 7.1",
@@ -127,7 +127,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 65
+      "views": 66
     },
     "7.2": {
       "title": "Chapter 7.2",
@@ -137,7 +137,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 70
+      "views": 71
     },
     "8.1": {
       "title": "Chapter 8.1",
@@ -157,7 +157,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 71
+      "views": 72
     },
     "9.1": {
       "title": "Chapter 9.1",
@@ -167,7 +167,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 79
+      "views": 80
     },
     "9.2": {
       "title": "Chapter 9.2",
@@ -197,7 +197,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 107
+      "views": 108
     },
     "11.1": {
       "title": "Chapter 11.1",
@@ -207,7 +207,7 @@
       "totalPages": 18,
       "pages": 18,
       "locked": false,
-      "views": 198
+      "views": 199
     },
     "11.2": {
       "title": "Chapter 11.2",
@@ -217,7 +217,7 @@
       "totalPages": 12,
       "pages": 12,
       "locked": false,
-      "views": 85
+      "views": 86
     },
     "12.1": {
       "title": "Chapter 12.1",
@@ -227,7 +227,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 111
+      "views": 112
     },
     "12.2": {
       "title": "Chapter 12.2",
@@ -237,7 +237,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 120
+      "views": 121
     },
     "13.1": {
       "title": "Chapter 13.1",
@@ -247,7 +247,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 204
+      "views": 205
     },
     "13.2": {
       "title": "Chapter 13.2",
@@ -257,7 +257,7 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 337
+      "views": 338
     },
     "14.1": {
       "title": "Chapter 14.1",
@@ -267,7 +267,7 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 359
+      "views": 360
     },
     "14.2": {
       "title": "Chapter 14.2",
@@ -277,7 +277,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 293
+      "views": 294
     },
     "15.1": {
       "title": "Chapter 15.1",
@@ -287,7 +287,7 @@
       "totalPages": 14,
       "pages": 14,
       "locked": false,
-      "views": 239
+      "views": 245
     },
     "15.2": {
       "title": "Chapter 15.2",
@@ -297,9 +297,9 @@
       "totalPages": 15,
       "pages": 15,
       "locked": false,
-      "views": 164
+      "views": 171
     }
   },
-  "lastUpdated": "2026-02-22T17:00:57.732Z",
+  "lastUpdated": "2026-02-22T17:00:58.570Z",
   "lastChapterUpdate": "2026-02-17T11:42:55+07:00"
 }
