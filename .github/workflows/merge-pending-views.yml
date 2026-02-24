@@ -1,0 +1,54 @@
+name: Merge Pending Views
+
+on:
+  workflow_dispatch: # Hanya manual trigger - jalankan sekali saat diperlukan
+
+permissions:
+  contents: write
+
+jobs:
+  merge-views:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Run merge pending views script
+        run: node merge-pending-views.js
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Tidak ada perubahan untuk di-commit"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Ada perubahan yang perlu di-commit"
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add manga.json
+          git add -A pending*.json || true
+          git commit -m "chore: merge pending views into manga.json [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "✅ Pending views berhasil digabungkan ke manga.json"
+          echo "🗑️ File pending telah dihapus"
