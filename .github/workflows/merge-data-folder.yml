@@ -1,0 +1,94 @@
+name: Merge Data Folder
+
+on:
+  workflow_dispatch: # Manual trigger
+    inputs:
+      confirm:
+        description: 'Type "merge" to confirm merging data folder to root'
+        required: true
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  merge-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate confirmation
+        if: github.event.inputs.confirm != 'merge'
+        run: |
+          echo "❌ Confirmation failed. Please type 'merge' in the input field."
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Check if data folder exists
+        id: check_data
+        run: |
+          if [ -d "data" ]; then
+            echo "has_data=true" >> $GITHUB_OUTPUT
+            echo "✅ data/ folder found"
+          else
+            echo "has_data=false" >> $GITHUB_OUTPUT
+            echo "⚠️ data/ folder not found - nothing to merge"
+          fi
+
+      - name: Run merge data folder script
+        if: steps.check_data.outputs.has_data == 'true'
+        run: node merge-data-folder.js
+
+      - name: Check for changes
+        if: steps.check_data.outputs.has_data == 'true'
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No changes to commit"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected"
+          fi
+
+      - name: Show changes summary
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "📊 Changes summary:"
+          git diff --stat
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add manga.json daily-views.json
+          git commit -m "chore: merge data folder to root files [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          echo "=========================================="
+          echo "✅ MERGE DATA FOLDER COMPLETED"
+          echo "=========================================="
+          if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Changes committed and pushed to GitHub"
+          else
+            echo "⚠️ No changes were made"
+          fi
+
+      - name: No data folder found
+        if: steps.check_data.outputs.has_data == 'false'
+        run: |
+          echo "✅ No data/ folder found - repository is clean"
