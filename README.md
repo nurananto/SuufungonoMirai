@@ -13,9 +13,7 @@
 | Author | MTY |
 | Artist | You2 |
 | Tipe | Manga (Hitam Putih) |
-| Status | Ongoing |
 | Genre | Shounen · Drama · Harem · Comedy · Romance · Supernatural · School Life · Slice of Life |
-| Chapter | 27 chapter |
 
 ## Link
 
