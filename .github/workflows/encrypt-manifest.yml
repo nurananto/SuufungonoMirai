@@ -74,6 +74,7 @@ jobs:
           
           # ✅ No [skip ci] so manga-automation.yml will trigger automatically
           git commit -m "🔐 Encrypt new manifest"
+          git pull --rebase origin main
           git push origin main
           
           echo ""
